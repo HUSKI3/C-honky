@@ -344,13 +344,24 @@ Variable map:
         var_asign = False
         math = False
         operation = ''
+        operations = {
+                    "ADD": "add",
+                    "SUB": "sub",
+                    "MUL": "mult",
+                    "DIV": "div",
+                    "OR":  "or",
+                    "XOR": "xor",
+                    "AND": "and",
+                    "RIGHT_SHIFT": "rsh",
+                    "LEFT_SHIFT": "lsh"
+                }
         # Check for math shit here
-        if type(tree['EXPRESSION']) == tuple and tree['EXPRESSION'][0] in ['ADD', 'SUB']:
+        if type(tree['EXPRESSION']) == tuple and tree['EXPRESSION'][0] in operations.keys():
             math = True
-            if tree['EXPRESSION'][0] == 'ADD':
-                first  = tree['EXPRESSION'][1]
-                second = tree['EXPRESSION'][2]
-                operation = 'add'
+
+            first  = tree['EXPRESSION'][1]
+            second = tree['EXPRESSION'][2]
+            operation = operations[tree['EXPRESSION'][0]]
 
         if not unsafe and not math:
             _var   = tree['ID']
@@ -455,11 +466,19 @@ Variable map:
                     raise TranspilerExceptions.TypeMissmatch(second, second[0], 'INT')
                 second_teplate = value_template.format(reg = registers[1], val = second[1])
 
+            if operation in ['rsh', 'lsh']:
+                if len(second) < 2:
+                    raise Exception("Can't use variables in a shift")
+                math_operation = f"{operation} r{registers[0]}, {second[1]}"
+            else:
+                math_operation = f"{operation} r{registers[0]}, r{registers[1]}, r{registers[0]}"
+
+
             final_template = f'''
             {first_teplate}
             {second_teplate}
 
-            {operation} r{registers[0]}, r{registers[1]}, r{registers[0]}
+            {math_operation}
 
             ; Store the result
             ldr r11, {_pos+self.bitstart}
@@ -738,7 +757,7 @@ Variable map:
 
             if operation in ['rsh', 'lsh']:
                 if len(second) < 2:
-                    raise Exception("Shifts can only be used with integer values")
+                    raise Exception("Can't use variables in a shift")
                 math_operation = f"{operation} r{registers[0]}, {second[1]}"
             else:
                 math_operation = f"{operation} r{registers[0]}, r{registers[1]}, r{registers[0]}"
