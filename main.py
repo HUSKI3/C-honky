@@ -1,5 +1,7 @@
 import pprint
 
+pprint = pprint.PrettyPrinter(indent=2).pprint
+
 class Dictlist(dict):
     def __setitem__(self, key, value):
         try:
@@ -349,8 +351,6 @@ Variable map:
                 first  = tree['EXPRESSION'][1]
                 second = tree['EXPRESSION'][2]
                 operation = 'add'
-                #print(self.evaluate(first))
-                #print(self.evaluate(second))
 
         if not unsafe and not math:
             _var   = tree['ID']
@@ -539,17 +539,38 @@ Variable map:
             #pprint(self.variables)
         
         del self.variables[_var[1]['VALUE']]
-        
-
 
     def create_variable(self, tree=None, custom_constructor={}, custom_pos=False):
         meta = {}
+        math = False
 
         if tree:
+            operations = {
+                    "ADD": "add",
+                    "SUB": "sub",
+                    "MUL": "mult",
+                    "DIV": "div",
+                    "OR":  "or",
+                    "XOR": "xor",
+                    "AND": "and",
+                    "RIGHT_SHIFT": "rsh",
+                    "LEFT_SHIFT": "lsh"
+                }
             _var = tree['ID']
-            _value = self.evaluate(tree['EXPRESSION'])
             _type = tree['TYPE']
-            
+            if type(tree['EXPRESSION']) == tuple and tree['EXPRESSION'][0] in operations.keys():
+                math = True
+                first  = tree['EXPRESSION'][1]
+                second = tree['EXPRESSION'][2]
+
+                operation = operations[tree['EXPRESSION'][0]]
+
+                _value = ['int','MATH_OPERATION_PRECONSTRUCTOR']
+                head_bitlength =  0
+                value_bitlength = 32
+            else:
+                _value = self.evaluate(tree['EXPRESSION'])
+
 
         elif custom_constructor:
             _var = custom_constructor['name']
@@ -558,6 +579,7 @@ Variable map:
         
         else:
             raise TranspilerExceptions.IncompleteDeclaration((tree, custom_constructor))
+
 
         if None in [
             _var,
@@ -636,7 +658,7 @@ Variable map:
             if _type.lower() in self.types:
                 _b_type = self.types[_type.lower()]
                 _b_x = None # WIP
-                head_bitlength = len('{:08b}'.format(_b_type))
+                head_bitlength =  len('{:08b}'.format(_b_type))
                 value_bitlength = len('{:032b}'.format(int(_value)))
 
         #pprint(custom_constructor)
@@ -660,8 +682,77 @@ Variable map:
             '''
             array_elem = True
 
+
         if custom_pos:
             pos = custom_pos
+
+        if math:
+
+            registers = [12, 13]
+            var_template = '''
+            ; Load from {addr} for var {var}
+            ldr r11, {addr}
+            ldr r0, $2
+            jpr r2
+            mov r{reg}, r20
+            '''
+            value_template = '''
+            ldr r{reg}, #{val}
+            '''
+            value_template_bitwise = '''
+             
+            '''
+
+            # Check first and second if they are variables
+            first_teplate = ""
+            first = self.evaluate(first)
+            if type(first) == str: # Probably a variable's ID
+                if first not in self.variables:
+                    raise TranspilerExceptions.UnkownVar(first, self.variables.keys)
+                var = self.variables[first]
+                first_teplate = var_template.format(
+                    addr = var['pos']+self.bitstart,
+                    var = first,
+                    reg = registers[0]
+                )
+            else:
+                if first[0] != 'INT':
+                    raise TranspilerExceptions.TypeMissmatch(first, first[0], 'INT')
+                first_teplate = value_template.format(reg = registers[0], val = first[1])
+
+            second_teplate = ""
+            second = self.evaluate(second)
+            if type(second) == str: # Probably a variable's ID
+                if second not in self.variables:
+                    raise TranspilerExceptions.UnkownVar(second, self.variables.keys)
+                var = self.variables[second]
+                second_teplate = var_template.format(
+                    addr = var['pos']+self.bitstart,
+                    var = second,
+                    reg = registers[1]
+                )
+            else:
+                if second[0] != 'INT':
+                    raise TranspilerExceptions.TypeMissmatch(second, second[0], 'INT')
+                second_teplate = value_template.format(reg = registers[1], val = second[1])
+
+            if operation in ['rsh', 'lsh']:
+                if len(second) < 2:
+                    raise Exception("Shifts can only be used with integer values")
+                math_operation = f"{operation} r{registers[0]}, {second[1]}"
+            else:
+                math_operation = f"{operation} r{registers[0]}, r{registers[1]}, r{registers[0]}"
+
+            final_template = f'''
+            {first_teplate}
+            {second_teplate}
+
+            {math_operation}
+
+            ; Store the result
+            mov r20, r{registers[0]}
+            '''
+
 
         # Add to map, but check flags first
         if array_elem:
@@ -680,6 +771,29 @@ Variable map:
                 ldr r0, $2
                 jpr r4
                 ldr r28, 0
+                '''
+            )
+            return {
+                "pos":pos,
+                "val":_value[1],
+                "type":_value[0],
+                "bitlen": bitlength
+            }
+        elif math:
+            self.variables[_var] = {
+                "pos":pos,
+                "val":_value[1],
+                "type":_value[0],
+                "meta": meta
+            }
+            print(f"({_var}) -> {_value}\nValue: {_value[1]}\nPosition: {pos} ({pos + self.bitstart})\nBitLength: {bitlength}\nNextAddr: {self.nextaddr}")
+            self.fin.append(
+                f'''
+                ; math construction for {_var}
+                {final_template}
+                ldr r11, {pos + self.bitstart}
+                ldr r0, $2
+                jpr r4
                 '''
             )
             return {

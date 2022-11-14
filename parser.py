@@ -640,6 +640,10 @@ class ChParser(Parser):
     @_("expression '|' expression")
     def expression(self, p):
         return ("OR", p[0], p[2])
+    
+    @_("expression '^' expression")
+    def expression(self, p):
+        return ("OR", p[0], p[2])
 
     @_("expression '&' expression")
     def expression(self, p):
@@ -656,6 +660,14 @@ class ChParser(Parser):
     @_("expression '>' expression")
     def expression(self, p):
         return ("GREATER", p[0], p[2])
+    
+    @_("expression '<' '<' expression")
+    def expression(self, p):
+        return ("LEFT_SHIFT", p[0], p[3])
+    
+    @_("expression '>' '>' expression")
+    def expression(self, p):
+        return ("RIGHT_SHIFT", p[0], p[3])
 
     @_("'(' expression ')'")
     def expression(self, p):
@@ -732,11 +744,6 @@ class ChParser(Parser):
     @_("expression '[' expression ']'")
     def get_index(self, p):
         return ("GET_INDEX", {"EXPRESSION": p.expression0, "INDEX": p.expression1}, p.lineno)
-
-    @_("expression '^' expression")
-    def get_index(self, p):
-        return ("GET_ASSOC_INDEX", {"EXPRESSION": p.expression0, "INDEX": p.expression1}, p.lineno)
-
 
     @_("'{' positional_args '}'")
     def _tuple(self, p):
