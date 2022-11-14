@@ -341,17 +341,16 @@ Variable map:
         #pprint(tree)
         var_asign = False
         math = False
+        operation = ''
         # Check for math shit here
         if type(tree['EXPRESSION']) == tuple and tree['EXPRESSION'][0] in ['ADD', 'SUB']:
             math = True
             if tree['EXPRESSION'][0] == 'ADD':
-                math_add = True
                 first  = tree['EXPRESSION'][1]
                 second = tree['EXPRESSION'][2]
+                operation = 'add'
                 #print(self.evaluate(first))
                 #print(self.evaluate(second))
-        else:
-            math_add = False
 
         if not unsafe and not math:
             _var   = tree['ID']
@@ -439,7 +438,7 @@ Variable map:
                 if first[0] != 'INT':
                     raise TranspilerExceptions.TypeMissmatch(first, first[0], 'INT')
                 first_teplate = value_template.format(reg = registers[0], val = first[1])
-            
+
             second_teplate = ""
             second = self.evaluate(second)
             if type(second) == str: # Probably a variable's ID
@@ -460,7 +459,7 @@ Variable map:
             {first_teplate}
             {second_teplate}
 
-            add r{registers[0]}, r{registers[1]}, r{registers[0]}
+            {operation} r{registers[0]}, r{registers[1]}, r{registers[0]}
 
             ; Store the result
             ldr r11, {_pos+self.bitstart}
@@ -468,7 +467,7 @@ Variable map:
             ldr r0, $2
             jpr r4
             '''
-            
+        
         if addr:
             _pos = addr
             
