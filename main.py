@@ -1143,6 +1143,17 @@ Variable map:
         # r14 is our location
         # r26 is our first variable
         # r30 is our second variable
+        load_var_template = '''
+        ; store var addr
+        ldr r11, {var}
+
+        ; load from var addr
+        ldr r0, $2
+        jpr r2
+        '''
+        raw_val_template = '''
+        ldr r20, {val}
+        '''
         template = '''
         ; store jump locations
         ldr r14, ._while_end_{label}
@@ -1150,22 +1161,12 @@ Variable map:
 
         ._while_start_{label}
 
-        ; store first addr
-        ldr r11, {first}
-
-        ; load from first addr
-        ldr r0, $2
-        jpr r2
+        {first}
 
         ; save value to first var
         mov r26, r20
 
-        ; store second addr
-        ldr r11, {second}
-
-        ; load from second addr
-        ldr r0, $2
-        jpr r2
+        {second}
 
         ; save value to second var
         mov r30, r20
@@ -1208,19 +1209,34 @@ Variable map:
         # Evaluate our variables
         first_var = self.evaluate(_condition[1])
         second_var = self.evaluate(_condition[2])
-        
-        if first_var not in self.variables:
-            raise TranspilerExceptions.UnkownVar(first_var, self.variables.keys)
-        else: first_var_tree = self.variables[first_var]
 
-        if second_var not in self.variables:
-            raise TranspilerExceptions.UnkownVar(second_var, self.variables.keys)
-        else: second_var_tree = self.variables[second_var]
+        if type(first_var) == str:
+            # got a variable
+            if first_var not in self.variables:
+                raise TranspilerExceptions.UnkownVar(first_var, self.variables.keys)
+            else: first_var_tree = load_var_template.format(
+                var = self.bitstart +  self.variables[first_var]['pos']
+            )
+        else:
+            first_var_tree = raw_val_template.format(
+                val = first_var[1]
+            )
+        
+        if type(second_var) == str:
+            if second_var not in self.variables:
+                raise TranspilerExceptions.UnkownVar(second_var, self.variables.keys)
+            else: second_var_tree = load_var_template.format(
+                var = self.bitstart +  self.variables[second_var]['pos']
+            )
+        else:
+            second_var_tree = raw_val_template.format(
+                val = second_var[1]
+            )
 
         template = template.format(
             code = _program,
-            first = self.bitstart + first_var_tree['pos'],
-            second = self.bitstart + second_var_tree['pos'],
+            first = first_var_tree,
+            second = second_var_tree,
             comparison = condition,
             label=self.labelcounter
         )
