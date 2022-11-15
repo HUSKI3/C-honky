@@ -995,7 +995,6 @@ Variable map:
         else:
 
             final_template = ""
-            print(value)
             if value[0] == "HEX":
                 value = value[1]["VALUE"]
                 final_template = f'''
@@ -1007,7 +1006,7 @@ Variable map:
                 ldr r20, #{value}
                 '''
             elif value[0] == "ID":
-                varaddr = self.variables[self.evaluate(value)]
+                varaddr = self.variables[self.evaluate(value)]['pos'] + self.bitstart
                 final_template = f'''
                 ldr r11, {varaddr}
                 ldr r0, $2
