@@ -221,6 +221,26 @@ class ChParser(Parser):
             },
             p.lineno,
         )
+    
+    @_("ID '+' '+' ';'")
+    def variable_assignment(self, p):
+        return (
+            "INCREMENT",
+            {
+                "VAR": p.ID
+            },
+            p.lineno,
+        )
+    
+    @_("ID '-' '-' ';'")
+    def variable_assignment(self, p):
+        return (
+            "DECREMENT",
+            {
+                "VAR": p.ID
+            },
+            p.lineno,
+        )
 
 
     @_("expression '(' empty ')' FARROW '{' program '}'")

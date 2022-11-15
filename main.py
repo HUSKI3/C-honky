@@ -71,7 +71,9 @@ class Transpiler:
             'EMBED': self.create_embed,
             'VARIABLE_REASSIGNMENT_AT_INDEX': self.reassign_variable_at_index,
             'WHILE': self.create_dyn_while,
-            'ADVANCED_WRITE': self.advanced_write
+            'ADVANCED_WRITE': self.advanced_write,
+            'INCREMENT': self.increment_var,
+            'DECREMENT': self.decrement_var,
         }
         
         self.builtins = {
@@ -228,6 +230,10 @@ Variable map:
                 jpr r4
                 '''
             )
+    
+    def increment_var(self, tree):
+        print(tree)
+        quit()
     
     def dec_func(self, tree):
         _name = tree["ID"]
@@ -1263,7 +1269,7 @@ Variable map:
         template = '''
         ; store jump locations
         ldr r14, ._if_end_{label}
-        ldr r29, ._else_end_{label}
+        ldr r16, ._else_end_{label}
 
         ; store first addr
         ldr r11, {first}
@@ -1290,7 +1296,7 @@ Variable map:
         {code}
         
         ; Jump to ._else_end_{label} if code has been run
-        jpr r29
+        jpr r16
 
         ._if_end_{label}
 
