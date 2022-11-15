@@ -993,10 +993,26 @@ Variable map:
             {instr}
             '''
         else:
+            if value[0] == "HEX":
+                value = value[1]["VALUE"]
+                final_template = '''
+                ldr r20, {val}
+                '''
+            if value[0] == "INT":
+                value = value[1]["VALUE"]
+                final_template = '''
+                ldr r20, #{val}
+                '''
+            elif value[0] == "ID":
+                varaddr = self.variables[self.evaluate(value)]
+                final_template = f'''
+                ldr r11, {varaddr}
+                ldr r0, $2
+                jpr r2
+                '''
             final_template = ""
             template = '''
             {final_template}
-            ldr r20, {val}
             ldr r15, {addr}
 
             {instr}
