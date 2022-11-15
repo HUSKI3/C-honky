@@ -203,11 +203,11 @@ class ChParser(Parser):
             p.lineno,
         )
 
-    @_("'[' HEX ',' ID ']' '=' HEX ';'")
+    @_("'[' HEX ',' ID ']' '=' expression ';'")
     def variable_assignment(self, p):
         return (
             "ADVANCED_WRITE",
-            {"ID": p.ID, "ADDR":p.HEX0, "VALUE": p.HEX1},
+            {"ID": p.ID, "ADDR":p.HEX, "VALUE": p.expression},
             p.lineno,
         )
     

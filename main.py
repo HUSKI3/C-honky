@@ -901,28 +901,120 @@ Variable map:
 
     def advanced_write(self, tree):
         #pprint(tree)
+        operations = {
+                    "ADD": "add",
+                    "SUB": "sub",
+                    "MUL": "mult",
+                    "DIV": "div",
+                    "OR":  "or",
+                    "XOR": "xor",
+                    "AND": "and",
+                    "RIGHT_SHIFT": "rsh",
+                    "LEFT_SHIFT": "lsh"
+                }
+
         addr = tree['ADDR']
-        type = tree['ID']
+        _type = tree['ID']
         value = tree['VALUE']
+
+        if value[0] in operations:
+            first  = value[1]
+            second = value[2]
+            print(value)
+            operation = operations[value[0]]
         
+            registers = [12, 13]
+            var_template = '''
+            ; Load from {addr} for var {var}
+            ldr r11, {addr}
+            ldr r0, $2
+            jpr r2
+            mov r{reg}, r20
+            '''
+            value_template = '''
+            ldr r{reg}, #{val}
+            '''
+
+            # Check first and second if they are variables
+            first_teplate = ""
+            first = self.evaluate(first)
+            if type(first) == str: # Probably a variable's ID
+                if first not in self.variables:
+                    raise TranspilerExceptions.UnkownVar(first, self.variables.keys)
+                var = self.variables[first]
+                first_teplate = var_template.format(
+                    addr = var['pos']+self.bitstart,
+                    var = first,
+                    reg = registers[0]
+                )
+            else:
+                if first[0] != 'INT':
+                    raise TranspilerExceptions.TypeMissmatch(first, first[0], 'INT')
+                first_teplate = value_template.format(reg = registers[0], val = first[1])
+
+            second_teplate = ""
+            second = self.evaluate(second)
+            if type(second) == str: # Probably a variable's ID
+                if second not in self.variables:
+                    raise TranspilerExceptions.UnkownVar(second, self.variables.keys)
+                var = self.variables[second]
+                second_teplate = var_template.format(
+                    addr = var['pos']+self.bitstart,
+                    var = second,
+                    reg = registers[1]
+                )
+            else:
+                if second[0] != 'INT':
+                    raise TranspilerExceptions.TypeMissmatch(second, second[0], 'INT')
+                second_teplate = value_template.format(reg = registers[1], val = second[1])
+
+            if operation in ['rsh', 'lsh']:
+                if len(second) < 2:
+                    raise Exception("Can't use variables in a shift")
+                math_operation = f"{operation} r{registers[0]}, {second[1]}"
+            else:
+                math_operation = f"{operation} r{registers[0]}, r{registers[1]}, r{registers[0]}"
+
+            final_template = f'''
+            {first_teplate}
+            {second_teplate}
+
+            {math_operation}
+
+            ; Store the result
+            mov r20, r{registers[0]}
+            '''
+
+            template = '''
+            ; mathematical advanced write
+            {final_template}
+            ldr r15, {addr}
+    
+            {instr}
+            '''
+        else:
+            final_template = ""
+            template = '''
+            {final_template}
+            ldr r20, {val}
+            ldr r15, {addr}
+
+            {instr}
+            '''
+
+
         type_instrs = {
             'byte': 'stb r20, r15',
             'halfword': 'sth r20, r15',
             'word': 'stw r20, r15',
         }
 
-        template = '''
-        ldr r20, {val}
-        ldr r15, {addr}
-
-        {instr}
-        '''
-
         self.fin.append(
             template.format(
                 val = value,
-                instr = type_instrs[type],
-                addr = addr
+                instr = type_instrs[_type],
+                addr = addr,
+                final_template = final_template
             )
         )
 
