@@ -233,7 +233,51 @@ Variable map:
     
     def increment_var(self, tree):
         print(tree)
-        quit()
+        _var   = tree['VAR']
+
+        if _var not in self.variables:
+            raise TranspilerExceptions.UnkownVar(_var, self.variables.keys)
+        
+        addr = self.variables[_var]['pos'] + self.bitstart
+
+        # get the var pos, load, add 1, write
+        self.fin.append(f'''
+        ; Load from {addr} for var {_var}
+        ldr r11, {addr}
+        ldr r0, $2
+        jpr r2
+
+        ; Add 1
+        iadd r20, 1
+
+        ; Store
+        ldr r0, $2
+        jpr r4
+        ''')
+    
+    def decrement_var(self, tree):
+        print(tree)
+        _var   = tree['VAR']
+
+        if _var not in self.variables:
+            raise TranspilerExceptions.UnkownVar(_var, self.variables.keys)
+        
+        addr = self.variables[_var]['pos'] + self.bitstart
+
+        # get the var pos, load, add 1, write
+        self.fin.append(f'''
+        ; Load from {addr} for var {_var}
+        ldr r11, {addr}
+        ldr r0, $2
+        jpr r2
+
+        ; Sub 1
+        isub r20, 1
+
+        ; Store
+        ldr r0, $2
+        jpr r4
+        ''')
     
     def dec_func(self, tree):
         _name = tree["ID"]
