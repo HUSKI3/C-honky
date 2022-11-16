@@ -1206,7 +1206,7 @@ Variable map:
         '''
         template = '''
         ; store jump locations
-        ldr r17, ._while_end_{label}
+        ldr r18, ._while_end_{label}
         ldr r15, ._while_start_{label}
 
         ._while_start_{label}
@@ -1283,7 +1283,7 @@ Variable map:
                 val = second_var[1]
             )
 
-        template = template.format(
+        template = template.replace("r17","r18").format(
             code = _program,
             first = first_var_tree,
             second = second_var_tree,
