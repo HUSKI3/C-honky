@@ -56,6 +56,7 @@ class Transpiler:
             functions = {},
             arguments = {},
             label_count = 0,
+            bitdata_nextaddr = 0
         ) -> None:
         self.code = tree
         self.actions = {
@@ -85,8 +86,9 @@ class Transpiler:
         self.arguments  = arguments
         self.bitstart   = 10000000
         self.bitend     = None
-        self.bitdata    = None
+        self.bitdata    = 10200001
         self.nextaddr   = nextaddr
+        self.bitdata_nextaddr = bitdata_nextaddr
         self.mode       = "standard"
         self.labelcounter = label_count
 
@@ -918,8 +920,11 @@ Variable map:
         if tree['ID'] == 'assembly':
             _vars = {}
             for var in self.variables:
-                _vars[var] = self.bitstart + self.variables[var]['pos']
-                # print(_vars,self.variables[var])
+                if self.variables[var]['pos'] < self.bitdata:
+                    _vars[var] = self.bitstart + self.variables[var]['pos']
+                    # print(_vars,self.variables[var])
+                else:
+                    _vars[var] = self.variables[var]['pos']
 
             self.fin.append(tree['CODE'][1]['VALUE'].format(**_vars))
         elif tree['ID'] == 'lk':
@@ -945,10 +950,34 @@ Variable map:
             _program = '\n'.join(_t.fin)
             self.fin.append(_program)
             self.fin_funcs = [*self.fin_funcs, *_t.fin_funcs]
+        elif tree['ID'] == 'bin':
+            # OOPSIE FUCKING DUPSIE
+            # GUESS WHO PUT DATA INTO THE BINARY?
+            # starting address for our data, keep track using self.bitdata_nextaddr
+            start_addr = self.bitdata_nextaddr
+            bytes = []
+            with open(tree['CODE'][1]['VALUE'], 'rb') as f:
+                for byte in f.read():
+                    bytes.append(byte)
+            for byte in bytes:
+                # Allocate address
+                addr = self.bitdata_nextaddr
+                self.fin.append(
+                    f"ldr r11, {self.bitdata+addr}\n"
+                    f"ldr r16, #{byte}\n"
+                    f"stb r16, r11 "
+                )
+                self.bitdata_nextaddr += 1
+            # now store the first addr we wrote to 
+            self.variables[tree['TO']] =  {
+                'meta': "DONT TOUCH ME", 
+                'pos': start_addr + self.bitdata, 
+                'type': 'int', 
+                'val': start_addr + self.bitdata
+            }
         else:
             raise Exception(f"Unknown format for embed {tree['ID']}")
-    
-
+            
     def advanced_write(self, tree):
         #pprint(tree)
         operations = {
@@ -1186,6 +1215,8 @@ Variable map:
             value = int(value)
 
         setattr(self, tree['KEY'], value)
+        if tree['KEY'] == 'bitdata':
+            self.bitdata = int(tree['VALUE'][1]['VALUE'])
 
     def create_dyn_while(self, tree):
         #pprint(tree)
@@ -1238,7 +1269,8 @@ Variable map:
             variables = self.variables,
             functions = self.functions,
             arguments= {},
-            label_count = self.labelcounter 
+            label_count = self.labelcounter,
+            bitdata_nextaddr= self.bitdata_nextaddr
         )
 
         # Overwrite default bit-values

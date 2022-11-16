@@ -346,6 +346,10 @@ class ChParser(Parser):
     @_("'#' EMBED '[' ID ']' string")
     def class_declaration(self, p):
         return ("EMBED", {"ID": p.ID, "CODE": p.string}, p.lineno)
+    
+    @_("'#' EMBED '[' ID ',' ID ']' string")
+    def class_declaration(self, p):
+        return ("EMBED", {"ID": p.ID0, "TO":p.ID1, "CODE": p.string}, p.lineno)
 
     @_("FOR expression IN expression '{' program '}'")
     def for_loop(self, p):
