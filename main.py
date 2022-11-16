@@ -1287,7 +1287,7 @@ Variable map:
             code = _program,
             first = first_var_tree,
             second = second_var_tree,
-            comparison = condition,
+            comparison = condition.replace("r17","r18"),
             label=self.labelcounter
         )
         #print(template)
