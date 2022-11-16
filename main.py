@@ -94,6 +94,7 @@ class Transpiler:
 
         self.types = {
             "char":1,
+            "hex":2,
             "int8":2,
             "int16":3,
             "int32":4,
@@ -614,6 +615,7 @@ Variable map:
     def create_variable(self, tree=None, custom_constructor={}, custom_pos=False):
         meta = {}
         math = False
+        inthex = "#"
 
         if tree:
             operations = {
@@ -668,6 +670,9 @@ Variable map:
             if type(from_var['val']) in [str, int]:
                 value_bitlength = len('{:032b}'.format(int(from_var['val'])))
             else: value_bitlength = 0
+
+            if _type == 'hex':
+                inthex = ""
 
             _b_type = self.types[_type.lower()]
             head_bitlength = len('{:08b}'.format(_b_type))
@@ -885,7 +890,7 @@ Variable map:
                 f'''
                 ; standard construction for {_var}
                 ldr r11, {pos + self.bitstart}
-                ldr r20, #{_value[1]}
+                ldr r20, {inthex}{_value[1]}
                 ldr r0, $2
                 jpr r4
                 '''
@@ -956,6 +961,7 @@ Variable map:
             # starting address for our data, keep track using self.bitdata_nextaddr
             start_addr = self.bitdata_nextaddr
             bytes = []
+            self.fin.append(f"; {tree['TO']}")
             with open(tree['CODE'][1]['VALUE'], 'rb') as f:
                 for byte in f.read():
                     bytes.append(byte)
@@ -972,7 +978,7 @@ Variable map:
             self.variables[tree['TO']] =  {
                 'meta': "DONT TOUCH ME", 
                 'pos': start_addr + self.bitdata, 
-                'type': 'int', 
+                'type': 'hex', 
                 'val': start_addr + self.bitdata
             }
         else:
