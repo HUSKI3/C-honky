@@ -1038,7 +1038,7 @@ Variable map:
             template = '''
             ; mathematical advanced write
             {final_template}
-            ldr r15, {addr}
+            ldr r14, {addr}
     
             {instr}
             '''
@@ -1064,16 +1064,16 @@ Variable map:
                 '''
             template = '''
             {final_template}
-            ldr r15, {addr}
+            ldr r14, {addr}
 
             {instr}
             '''
 
 
         type_instrs = {
-            'byte': 'stb r20, r15',
-            'halfword': 'sth r20, r15',
-            'word': 'stw r20, r15',
+            'byte': 'stb r20, r14',
+            'halfword': 'sth r20, r14',
+            'word': 'stw r20, r14',
         }
 
         self.fin.append(
