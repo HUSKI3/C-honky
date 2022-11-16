@@ -1190,7 +1190,7 @@ Variable map:
     def create_dyn_while(self, tree):
         #pprint(tree)
         # Build conditional template first
-        # r14 is our location
+        # r17 is our location
         # r26 is our first variable
         # r30 is our second variable
         load_var_template = '''
@@ -1206,7 +1206,7 @@ Variable map:
         '''
         template = '''
         ; store jump locations
-        ldr r14, ._while_end_{label}
+        ldr r17, ._while_end_{label}
         ldr r15, ._while_start_{label}
 
         ._while_start_{label}
@@ -1312,7 +1312,7 @@ Variable map:
         # r30 is our second variable
         template = '''
         ; store jump locations
-        ldr r14, ._if_end_{label}
+        ldr r17, ._if_end_{label}
         ldr r16, ._else_end_{label}
 
         ; store first addr
@@ -1429,10 +1429,10 @@ Variable map:
     
     def resolve_comparisons(self, cmp):
         comparisons = {
-            'EQEQ': 'jprne r14, r26, r30',
-            'NOT_EQEQ': 'jpre r14, r26, r30',
-            'LESS': 'jprgt r14, r26, r30',
-            'GREATER': 'jprlt r14, r26, r30'
+            'EQEQ': 'jprne r17, r26, r30',
+            'NOT_EQEQ': 'jpre r17, r26, r30',
+            'LESS': 'jprgt r17, r26, r30',
+            'GREATER': 'jprlt r17, r26, r30'
         }
         return comparisons[cmp]
     
