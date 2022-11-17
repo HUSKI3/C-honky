@@ -56,7 +56,7 @@ class Transpiler:
             functions = {},
             arguments = {},
             label_count = 0,
-            bitdata_nextaddr = 0
+            bitdata_nextaddr = 0x0
         ) -> None:
         self.code = tree
         self.actions = {
@@ -121,7 +121,6 @@ BitStart:\t{self.bitstart}
 BitEnd: \t{self.bitend}
 BitData:\t{self.bitdata}
 NextAddr:\t{self.nextaddr}
-
 Variable map:
 """)
         pprint(self.variables)
@@ -143,7 +142,6 @@ Variable map:
             f'''
             ; {_arg} is at {pos}
             ldr r11, {pos}
-
             ; load from {pos}
             ldr r0, $2
             jpr r2
@@ -249,10 +247,8 @@ Variable map:
         ldr r11, {addr}
         ldr r0, $2
         jpr r2
-
         ; Add 1
         iadd r20, 1
-
         ; Store
         ldr r0, $2
         jpr r4
@@ -273,10 +269,8 @@ Variable map:
         ldr r11, {addr}
         ldr r0, $2
         jpr r2
-
         ; Sub 1
         isub r20, 1
-
         ; Store
         ldr r0, $2
         jpr r4
@@ -530,9 +524,7 @@ Variable map:
             final_template = f'''
             {first_teplate}
             {second_teplate}
-
             {math_operation}
-
             ; Store the result
             ldr r11, {_pos+self.bitstart}
             mov r20, r{registers[0]}
@@ -822,9 +814,7 @@ Variable map:
             final_template = f'''
             {first_teplate}
             {second_teplate}
-
             {math_operation}
-
             ; Store the result
             mov r20, r{registers[0]}
             '''
@@ -932,7 +922,7 @@ Variable map:
                     _vars[var] = self.variables[var]['pos']
 
             self.fin.append(tree['CODE'][1]['VALUE'].format(**_vars))
-        elif tree['ID'] == 'lk':
+        elif tree['ID'] == 'ck':
             text = open(tree['CODE'][1]['VALUE'],"r").read()
             from parser import ChParser, ChLexer
             parser = ChParser()
@@ -969,16 +959,16 @@ Variable map:
                 # Allocate address
                 addr = self.bitdata_nextaddr
                 self.fin.append(
-                    f"ldr r11, {self.bitdata+addr}\n"
+                    f"ldr r11, {hex(self.bitdata+addr)}\n"
                     f"ldr r16, #{byte}\n"
                     f"stb r16, r11 "
                 )
-                self.bitdata_nextaddr += 1
+                self.bitdata_nextaddr += 0x1
             # now store the first addr we wrote to 
             self.variables[tree['TO']] =  {
                 'meta': "DONT TOUCH ME", 
                 'pos': start_addr + self.bitdata, 
-                'type': 'hex', 
+                'type': 'int', 
                 'val': start_addr + self.bitdata
             }
         else:
@@ -1063,9 +1053,7 @@ Variable map:
             final_template = f'''
             {first_teplate}
             {second_teplate}
-
             {math_operation}
-
             ; Store the result
             mov r20, r{registers[0]}
             '''
@@ -1100,7 +1088,6 @@ Variable map:
             template = '''
             {final_template}
             ldr r14, {addr}
-
             {instr}
             '''
 
@@ -1222,7 +1209,7 @@ Variable map:
 
         setattr(self, tree['KEY'], value)
         if tree['KEY'] == 'bitdata':
-            self.bitdata = int(tree['VALUE'][1]['VALUE'])
+            self.bitdata = int(tree['VALUE'][1]['VALUE'], 16)
 
     def create_dyn_while(self, tree):
         #pprint(tree)
@@ -1233,7 +1220,6 @@ Variable map:
         load_var_template = '''
         ; store var addr
         ldr r11, {var}
-
         ; load from var addr
         ldr r0, $2
         jpr r2
@@ -1245,24 +1231,17 @@ Variable map:
         ; store jump locations
         ldr r18, ._while_end_{label}
         ldr r15, ._while_start_{label}
-
         ._while_start_{label}
-
         {first}
-
         ; save value to first var
         mov r26, r20
-
         {second}
-
         ; save value to second var
         mov r30, r20
-
         {comparison}
         
         {code}
         jpr r15
-
         ._while_end_{label}
         
         ldr r26, #0
@@ -1352,38 +1331,28 @@ Variable map:
         ; store jump locations
         ldr r17, ._if_end_{label}
         ldr r16, ._else_end_{label}
-
         ; store first addr
         ldr r11, {first}
-
         ; load from first addr
         ldr r0, $2
         jpr r2
-
         ; save value to first var
         mov r26, r20
-
         ; store second addr
         ldr r11, {second}
-
         ; load from second addr
         ldr r0, $2
         jpr r2
-
         ; save value to second var
         mov r30, r20
-
         {comparison}
         
         {code}
         
         ; Jump to ._else_end_{label} if code has been run
         jpr r16
-
         ._if_end_{label}
-
         {else_code}
-
         ._else_end_{label}
         ldr r26, #0
         '''
