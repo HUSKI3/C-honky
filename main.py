@@ -92,6 +92,8 @@ class Transpiler:
         self.mode       = "standard"
         self.labelcounter = label_count
 
+        print("labels >>>>>>",self.labelcounter)
+
         self.types = {
             "char":1,
             "hex":2,
@@ -330,6 +332,7 @@ Variable map:
         _t.run()
         # Set main nextaddr to _t nextaddr
         self.nextaddr = _t.nextaddr
+        self.labelcounter = _t.labelcounter 
         _program = '\n'.join(_t.fin)
         # _return_type = self.evaluate(tree["RETURNS_TYPE"])
 
@@ -940,6 +943,7 @@ Variable map:
             _t.run()
             # Set main nextaddr to _t nextaddr
             self.nextaddr = _t.nextaddr
+            self.labelcounter = _t.labelcounter 
             # Update functions
             self.functions = _t.functions
             _program = '\n'.join(_t.fin)
@@ -1263,6 +1267,7 @@ Variable map:
 
         # Set main nextaddr to _t nextaddr
         self.nextaddr = _t.nextaddr
+        self.labelcounter = _t.labelcounter 
         _program = '\n'.join(_t.fin)
 
         # Update our variables
@@ -1370,6 +1375,8 @@ Variable map:
         # Overwrite default bit-values
         _t.run()
 
+        # Set label count back
+        self.labelcounter = _t.labelcounter 
         # Set main nextaddr to _t nextaddr
         self.nextaddr = _t.nextaddr
         _program = '\n'.join(_t.fin)
@@ -1411,6 +1418,7 @@ Variable map:
 
             # Overwrite default bit-values
             _t.run()
+            self.labelcounter = _t.labelcounter 
 
             # Set main nextaddr to _t nextaddr
             self.nextaddr = _t.nextaddr
