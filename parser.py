@@ -667,7 +667,7 @@ class ChParser(Parser):
     
     @_("expression '^' expression")
     def expression(self, p):
-        return ("OR", p[0], p[2])
+        return ("XOR", p[0], p[2])
 
     @_("expression '&' expression")
     def expression(self, p):
