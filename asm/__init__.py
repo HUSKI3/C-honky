@@ -35,6 +35,9 @@ def LangProc(cls):
         if hasattr(func, '_lang_instance'):
             if func.__doc__:
                 cls.instructions[func.__doc__.strip('?')] = func
+                if '!labels' in func.__doc__:
+                    cls.instructions[name] = func
+                    cls.instructions[name]._lang_instance["labels"] = True
             else:
                 cls.instructions[name] = func
     return cls
@@ -89,8 +92,6 @@ class Loader:
     def translate(self, code) -> bytearray:
         complete = []
         line = 0
-        later = []
-        aaa = []
         for index, inst in enumerate([_.strip() for _ in self.code.split('\n') if _.strip()]):
             if not inst:
                 continue
@@ -119,8 +120,7 @@ class Loader:
                                 func = self.lang.instructions[
                                     inst[0]
                                 ]
-                                expects = signature(func)
-                                if 'labels' in expects.parameters:
+                                if func._lang_instance["labels"] == True:
                                     inst.append(self.labels)
                                 # Fuck it
                                 for i, _ in enumerate(inst):
@@ -135,7 +135,7 @@ class Loader:
                                     *inst[1:]
                                 )
                             except TypeError as e:
-                                print(f"{e} :: Failed to match required arguments for [{inst[0]}].\nGot: {inst[1:]}\nExpected: {expects}")
+                                print(f"{e} :: Failed to match required arguments for [{inst[0]}].\nGot: {inst[1:]}")
                                 quit()
                             total += len(x)
 
@@ -157,50 +157,22 @@ class Loader:
                     func = self.lang.instructions[
                         cur[0]
                     ]
-                    expects = signature(func)
-                    if 'labels' in expects.parameters:
+                    if func._lang_instance["labels"] == True:
                         cur.append(self.labels)
                     x = func(
                         *cur[1:]
                     )
                 except TypeError as e:
-                    print(f"{e} :: Failed to match required arguments for [{cur[0]}].\nGot: {cur[1:]}\nExpected: {expects}")
+                    print(f"{e} :: Failed to match required arguments for [{cur[0]}].\nGot: {cur[1:]}")
                     quit()
                 #print(colours.blue,f"[{line}]\t", colours.reset, '\t'.join([str(_) for _ in x]), '\t\t', ' '.join([str(_) for _ in cur]))
-                fstr = "{: >5}"*len(x)
-                fstr_asm = "{: >10}"*(len(cur)-1)
-                label = ', '.join([str(_) for _ in [self.labels[cur[2][1:]], cur[2][1:]]]) if len(cur) > 2 and cur[2][0] == '.' else ''
                 #print(label, cur)
                 #console.log(f"Created label data for {label.strip()}")
-                later.append(
-                    [
-                        colours.blue + f"[{line}]\t" + colours.reset + fstr.format(*[str(_) for _ in x]),
-                        fstr_asm.format(*[str(_) for _ in cur[:-1]]), 
-                        label
-                    ]
-                )
                 line += len(x)
                 complete = complete + x
-                aaa.append(x)
             else:
                 raise Exception(f"Unbound call {cur[0]}")
-        #headers = ['INSTRUCTIONS', 'ASSEMBLY', 'LABEL']
-        #table = columnar(later, headers, no_borders=False)
-        # try:
-        #     c = input("Table [y|Y/*]>")
-        # except KeyboardInterrupt:
-        #     # Exit safely
-        #     del self
-        #     exit()
-        c = 'n'
-        #if c in ["y", "Y"]:
-            # Go back to standard print
-            #legacy_print(table)
-        # Remove r!
         complete = [int(c[1:]) if (type(c) != int and not c.isdigit() and c[0] == 'r') else int(c) for c in complete]
-        with open("complete.o", 'w+') as f:
-            for x in aaa:
-                f.write('\n'+str(x))
         # Debug?
         self.complete = complete
         return bytearray(complete)

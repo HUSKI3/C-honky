@@ -8,7 +8,8 @@ class Lang:
         function._lang_instance = {
             "name"  : function.__name__,
             "bound" : kwargs.get('bound'),
-            "compo" : kwargs.get('compound')
+            "compo" : kwargs.get('compound'),
+            "labels": False
         } 
         return function
 
@@ -119,6 +120,7 @@ class Lang:
     
     @instruction
     def lsh(ra, rb, labels):
+        '!labels'
         d = labels[rb[1:]] if (not rb.isdigit() and rb[0] == '.') else int(rb, base=16)
         return [
             0x08, ra, (d >> 8) & 0xff, d & 0xff
@@ -126,6 +128,7 @@ class Lang:
     
     @instruction
     def rsh(ra, rb, labels):
+        '!labels'
         d = labels[rb[1:]] if (not rb.isdigit() and rb[0] == '.') else int(rb, base=16)
         return [
             0x09, ra, (d >> 8) & 0xff, d & 0xff
@@ -133,6 +136,7 @@ class Lang:
     
     @instruction
     def ldru(ra, rb, labels):
+        '!labels'
         d = labels[rb[1:]] if (not rb.isdigit() and rb[0] == '.') else int(rb, base=16)
         return [
             0x10, ra, (d >> 8) & 0xff, d & 0xff
@@ -140,6 +144,7 @@ class Lang:
     
     @instruction
     def ldrl(ra, rb, labels):
+        '!labels'
         d = labels[rb[1:]] if (not rb.isdigit() and rb[0] == '.') else int(rb, base=16)
         return [
             0x11, ra, (d >> 8) & 0xff, d & 0xff
@@ -221,6 +226,7 @@ class Lang:
     
     @instruction
     def ldr(ra, rb, labels):
+        '!labels'
         d = labels[rb[1:]] if (not rb.isdigit() and rb[0] == '.') else int(rb, base=16)
         ldrl = [
             0x11, ra, (d >> 8) & 0xff, d & 0xff
