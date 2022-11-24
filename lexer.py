@@ -126,7 +126,6 @@ class ChLexer(Lexer):
     TARROW = r'->'
     FARROW = r'\=\=>'
     TELSE = r'\|\|'
-    COLON_COLON = r"::"
     EQEQ = "=="
     NOT_EQEQ = r"!="
     EQ_GREATER = r"=>"

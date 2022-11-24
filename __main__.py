@@ -19,7 +19,6 @@ for tok in lexer.tokenize(text):
     pprint(tok)
 
 tree = parser.parse(lexer.tokenize(text))
-pprint(tree)
 t = Transpiler(tree)
 t.run()
 finished_asm = '\n'.join(t.fin)

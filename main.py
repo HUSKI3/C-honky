@@ -37,7 +37,7 @@ class TranspilerExceptions:
             Exception.__init__(self, f"Got unknown action '{act}'")
     class UnkownMethodReference(Exception):
         def __init__(self, func):
-            Exception.__init__(self, f"Got unknwon function '{func}'")
+            Exception.__init__(self, f"Got unknown function '{func}'")
 
 class TranspilerWarnings:
     class ModesEnabled(Warning):
@@ -56,7 +56,8 @@ class Transpiler:
             functions = {},
             arguments = {},
             label_count = 0,
-            bitdata_nextaddr = 0x0
+            bitdata_nextaddr = 0x0,
+            namespace = 'main::'
         ) -> None:
         self.code = tree
         self.actions = {
@@ -75,10 +76,11 @@ class Transpiler:
             'ADVANCED_WRITE': self.advanced_write,
             'INCREMENT': self.increment_var,
             'DECREMENT': self.decrement_var,
+            'CLASS_DECLARATION': self.namespace_dec
         }
         
         self.builtins = {
-            "putchar": self.putchar
+            "main::putchar": self.putchar
         }
 
         self.variables  = variables
@@ -91,6 +93,8 @@ class Transpiler:
         self.bitdata_nextaddr = bitdata_nextaddr
         self.mode       = "standard"
         self.labelcounter = label_count
+        self.namespace = namespace
+        self.namespaces = {}
 
         print("labels >>>>>>",self.labelcounter)
 
@@ -156,7 +160,12 @@ Variable map:
 
     def call_func(self, tree):
         _func = self.evaluate(tree['ID'])
+        _namespace = self.evaluate(tree['NAMESPACE'])+'::' if 'NAMESPACE' in tree else self.namespace
+        _func = _namespace + _func
         _args = tree['FUNCTION_ARGUMENTS']
+
+        print(_namespace,_func,tree['ID'])
+        
 
         if _func in self.builtins:
             self.builtins[_func](_args)
@@ -205,7 +214,7 @@ Variable map:
                 jpr r23
                 '''
             )
-        else: raise TranspilerExceptions.UnkownMethodReference(_func)
+        else: pprint(self.functions); raise TranspilerExceptions.UnkownMethodReference(_func)
 
     def create_return_value(self, tree):
         _value = self.evaluate(tree["EXPRESSION"])
@@ -277,9 +286,49 @@ Variable map:
         ldr r0, $2
         jpr r4
         ''')
+
+    def namespace_dec(self, tree):
+        pprint(tree)
+        namespace_name = tree['ID']
+        program = tree['PROGRAM']
+
+        _t = Transpiler(
+            program,
+            nextaddr = self.nextaddr,
+            variables = self.variables,
+            functions = self.functions,
+            label_count = self.labelcounter,
+            namespace=namespace_name+'::'
+        )
+
+        # Overwrite default bit-values
+        _t.run()
+        # Set main nextaddr to _t nextaddr
+        self.nextaddr = _t.nextaddr
+        self.labelcounter = _t.labelcounter 
+        self.functions = _t.functions
+        print(
+            set(_t.variables) - 
+            set(self.variables)
+        )
+        self.variables = {**self.variables, **_t.variables}
+        _program = '\n'.join(_t.fin)
+        self.fin.append(_program)
+        #print(_program)
+        #print(self.namespace)
+        #pprint(list(self.variables.keys()))
+        #print(self)
+        #input()
+        #quit()
+        for fun in _t.fin_funcs:
+            self.fin_funcs.append(
+                fun
+            )
     
     def dec_func(self, tree):
-        _name = tree["ID"]
+        _name = tree['ID']
+        _namespace = self.evaluate(tree['NAMESPACE'])+'::' if 'NAMESPACE' in tree else self.namespace
+        _name = _namespace + _name
         _items = {}
 
         if "POSITIONAL_ARGS" in tree["FUNCTION_ARGUMENTS"]:
@@ -322,7 +371,7 @@ Variable map:
         _t = Transpiler(
             tree["PROGRAM"],
             nextaddr = self.nextaddr,
-            variables = self.variables.copy(),
+            variables = self.variables,
             functions = self.functions,
             arguments= _items,
             label_count = self.labelcounter 
@@ -417,6 +466,7 @@ Variable map:
             _var   = tree['ID']
 
             if _var not in self.variables:
+                # print(self)
                 raise TranspilerExceptions.UnkownVar(_var, self.variables.keys)
 
             if type(self.evaluate(tree['EXPRESSION'])) == list:
@@ -1366,7 +1416,7 @@ Variable map:
         _t = Transpiler(
             _if[1]['CODE'],
             nextaddr = self.nextaddr,
-            variables = self.variables,
+            variables = self.variables.copy(),
             functions = self.functions,
             arguments= {},
             label_count = self.labelcounter 

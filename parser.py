@@ -138,28 +138,14 @@ class ChParser(Parser):
     def return_statement(self, p):
         return ("RETURN", {"EXPRESSION": p.expression}, p.lineno)
 
+
+#########################################################################################################
+
     @_("expression '(' function_arguments ')'")
     def function_call(self, p):
         return (
             "FUNCTION_CALL",
             {"FUNCTION_ARGUMENTS": p.function_arguments, "ID": p.expression},
-            p.lineno,
-        )
-
-    @_("expression '(' function_arguments ')' FARROW '{' program '}'")
-    def function_call(self, p):
-        return (
-            "FUNCTION_CALL",
-            {"FUNCTION_ARGUMENTS": p.function_arguments, "ID": p.expression,
-             "ONCOMPLETE": p.program},
-            p.lineno,
-        )
-    
-    @_("'?' expression")
-    def debug_call(self, p):
-        return (
-            "DEBUG_CALL",
-            {"VALUE": {}},
             p.lineno,
         )
 
@@ -170,7 +156,27 @@ class ChParser(Parser):
             {"FUNCTION_ARGUMENTS": {}, "ID": p.expression},
             p.lineno,
         )
-    
+
+# NAMESPACED?
+    @_("expression ':' ':' expression '(' function_arguments ')'")
+    def function_call(self, p):
+        return (
+            "FUNCTION_CALL",
+            {"FUNCTION_ARGUMENTS": p.function_arguments, "ID": p.expression1, "NAMESPACE": p.expression0},
+            p.lineno,
+        )
+
+    @_("expression ':' ':' expression '(' empty ')'")
+    def function_call(self, p):
+        return (
+            "FUNCTION_CALL",
+            {"FUNCTION_ARGUMENTS": {}, "ID": p.expression1, "NAMESPACE": p.expression0},
+            p.lineno,
+        )
+
+
+#########################################################################################################
+
     @_("'#' ID expression")
     def function_call(self, p):
         return (
@@ -517,7 +523,7 @@ class ChParser(Parser):
             p.lineno,
         )
 
-    @_("class_attribute '=' expression ';'")
+    @_("'?' '!'")
     def class_attribute_assignment(self, p):
         return (
             "CLASS_ATTRIBUTE_ASSIGNMENT",
@@ -837,7 +843,7 @@ class ChParser(Parser):
     def bool(self, p):
         return ("BOOL", {"VALUE": p.FALSE})
 
-    @_("expression COLON_COLON ID")
+    @_("'!' expression '?' ID")
     def class_attribute(self, p):
         return ("CLASS_ATTRIBUTE", {"CLASS": p[0], "ATTRIBUTE": p[2]}, p.lineno)
 
