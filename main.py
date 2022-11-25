@@ -57,7 +57,9 @@ class Transpiler:
             arguments = {},
             label_count = 0,
             bitdata_nextaddr = 0x0,
-            namespace = 'main::'
+            namespace = 'main::',
+            bitstart = 10000000,
+            bitdata  = 10200001
         ) -> None:
         self.code = tree
         self.actions = {
@@ -74,6 +76,7 @@ class Transpiler:
             'VARIABLE_REASSIGNMENT_AT_INDEX': self.reassign_variable_at_index,
             'WHILE': self.create_dyn_while,
             'ADVANCED_WRITE': self.advanced_write,
+            'ADVANCED_READ': self.advanced_read,
             'INCREMENT': self.increment_var,
             'DECREMENT': self.decrement_var,
             'CLASS_DECLARATION': self.namespace_dec
@@ -86,9 +89,9 @@ class Transpiler:
         self.variables  = variables
         self.functions  = functions
         self.arguments  = arguments
-        self.bitstart   = 10000000
+        self.bitstart   = bitstart
         self.bitend     = None
-        self.bitdata    = 10200001
+        self.bitdata    = bitdata
         self.nextaddr   = nextaddr
         self.bitdata_nextaddr = bitdata_nextaddr
         self.mode       = "standard"
@@ -298,7 +301,9 @@ Variable map:
             variables = self.variables,
             functions = self.functions,
             label_count = self.labelcounter,
-            namespace=namespace_name+'::'
+            namespace=namespace_name+'::',
+            bitstart=self.bitstart,
+            bitdata=self.bitdata
         )
 
         # Overwrite default bit-values
@@ -374,7 +379,9 @@ Variable map:
             variables = self.variables,
             functions = self.functions,
             arguments= _items,
-            label_count = self.labelcounter 
+            label_count = self.labelcounter,
+            bitstart=self.bitstart,
+            bitdata=self.bitdata
         )
 
         # Overwrite default bit-values
@@ -986,7 +993,9 @@ Variable map:
                 nextaddr = self.nextaddr,
                 variables = self.variables,
                 functions = self.functions,
-                label_count = self.labelcounter 
+                label_count = self.labelcounter,
+                bitstart=self.bitstart,
+            bitdata=self.bitdata
             )
 
             # Overwrite default bit-values
@@ -1006,6 +1015,7 @@ Variable map:
             start_addr = self.bitdata_nextaddr
             bytes = []
             self.fin.append(f"; {tree['TO']}")
+            # self.fin.append("\nem 0 0\n")
             with open(tree['CODE'][1]['VALUE'], 'rb') as f:
                 for byte in f.read():
                     bytes.append(byte)
@@ -1028,6 +1038,57 @@ Variable map:
         else:
             raise Exception(f"Unknown format for embed {tree['ID']}")
             
+    def advanced_read(self, tree):
+        pprint(tree)
+        
+        varname = tree['ID']
+        addr = tree['ADDR']
+        type = tree['TYPE']
+        inst_type = tree['HOW']
+        
+        type_instrs_ld = {
+            "byte": "ldb r20, r14", # value at r20, addr at r14
+            "word": "ldw r20, r14",
+            "half": "ldh r20, r14",
+        }
+        type_instrs_st = {
+            "byte": "stb r20, r14", # value at r20, addr at r14
+            "word": "stw r20, r14",
+            "half": "sth r20, r14",
+        }
+
+        template = '''
+        ; r14 is the target addr
+        ldr r14, {addr}
+        {ldinst}
+        ; value should be in r20 now
+        ; r14 is now the variable addr
+        ldr r14, {varaddr}
+        {stdinst}
+        '''
+
+        var = self.create_variable(
+            custom_constructor={
+                "name": varname,
+                "value": 0,
+                "type": type
+            }
+        )
+        #print(var)
+
+        self.variables[varname] = var
+
+        t = template.format(
+            addr = addr,
+            varaddr = var['pos'] + self.bitstart,
+            ldinst = type_instrs_ld[inst_type],
+            stdinst = type_instrs_st[inst_type]
+        )
+        #print(t)
+        self.fin.append(
+            t
+        )
+    
     def advanced_write(self, tree):
         #pprint(tree)
         operations = {
@@ -1148,7 +1209,7 @@ Variable map:
 
         type_instrs = {
             'byte': 'stb r20, r14',
-            'halfword': 'sth r20, r14',
+            'half': 'sth r20, r14',
             'word': 'stw r20, r14',
         }
 
@@ -1253,9 +1314,16 @@ Variable map:
     def compiler_eval(self, tree):
         if tree['KEY'] == "mode":
             TranspilerWarnings.ModesEnabled(tree['VALUE'][1]['VALUE'])
-        if self.mode != "kernel" and\
-             tree['KEY'] in ["bitstart", "bitend", "bitdata"]:
-             raise TranspilerExceptions.UnauthorizedBitSet()
+            if tree['VALUE'][1]['VALUE'] == "normal":
+                self.bitstart = 0
+                self.bitdata = 0
+        # if self.mode != "kernel" and\
+            #  tree['KEY'] in ["bitstart", "bitend", "bitdata"]:
+            #  if tree['KEY'] == "bitstart":
+                # self.bitstart = int(tree['VALUE'][1]['VALUE'])
+            #  elif tree['KEY'] == "bitdata":
+                # self.bitdata = int(tree['VALUE'][1]['VALUE'])
+            #  raise TranspilerExceptions.UnauthorizedBitSet()
 
         value = tree['VALUE'][1]['VALUE']
         if value.isdigit():
@@ -1309,7 +1377,9 @@ Variable map:
             functions = self.functions,
             arguments= {},
             label_count = self.labelcounter,
-            bitdata_nextaddr= self.bitdata_nextaddr
+            bitdata_nextaddr= self.bitdata_nextaddr,
+            bitstart=self.bitstart,
+            bitdata=self.bitdata
         )
 
         # Overwrite default bit-values
@@ -1419,7 +1489,9 @@ Variable map:
             variables = self.variables.copy(),
             functions = self.functions,
             arguments= {},
-            label_count = self.labelcounter 
+            label_count = self.labelcounter,
+            bitstart=self.bitstart,
+            bitdata=self.bitdata
         )
 
         # Overwrite default bit-values
@@ -1463,7 +1535,9 @@ Variable map:
                 variables = self.variables,
                 functions = self.functions,
                 arguments= {},
-                label_count = self.labelcounter 
+                label_count = self.labelcounter,
+                bitstart=self.bitstart,
+                bitdata=self.bitdata
             )
 
             # Overwrite default bit-values

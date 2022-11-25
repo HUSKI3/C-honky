@@ -217,6 +217,7 @@ class ChParser(Parser):
             p.lineno,
         )
     
+    
     @_("'<' ID '>' expression")
     def function_call(self, p):
         return (
@@ -407,6 +408,14 @@ class ChParser(Parser):
         return (
             "VARIABLE_ASSIGNMENT",
             {"ID": p.ID1, "TYPE":p.ID0, "EXPRESSION": p.expression},
+            p.lineno,
+        )
+
+    @_("ID ID '=' '[' HEX ',' ID ']' ';'")
+    def variable_assignment(self, p):
+        return (
+            "ADVANCED_READ",
+            {"ID": p.ID1, "TYPE": p.ID0, "HOW":p.ID2, "ADDR":p.HEX},
             p.lineno,
         )
 
