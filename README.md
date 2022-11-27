@@ -82,8 +82,8 @@ HelloWorld(1);
 
 ## Libraries
 Currently C-honky has the following libraries:
-- std.ck - Standard library
-- gl.ck - Graphics library
+- [std.ck](https://github.com/HUSKI3/C-honky/blob/main/libs/std.ck) - Standard library
+- [gl.ck](https://github.com/HUSKI3/C-honky/blob/main/libs/gl.ck)  - Graphics library
 - disk.ck - Abstracted Disk library
 - dif.ck - Disk Interface
 
