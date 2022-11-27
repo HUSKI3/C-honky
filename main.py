@@ -316,6 +316,7 @@ Variable map:
             set(_t.variables) - 
             set(self.variables)
         )
+
         self.variables = {**self.variables, **_t.variables}
         _program = '\n'.join(_t.fin)
         self.fin.append(_program)
@@ -384,6 +385,10 @@ Variable map:
             bitdata=self.bitdata
         )
 
+        self.variables.update(
+            _t.variables
+        )
+
         # Overwrite default bit-values
         _t.run()
         # Set main nextaddr to _t nextaddr
@@ -432,7 +437,7 @@ Variable map:
             jpr r20
         ; END FUNCTION {name}
         '''
-
+        
         self.fin_funcs.append(
             base.format(name = _name, program = _program, _items = _items, ret_pos=x['pos']+self.bitstart)
         )
@@ -447,8 +452,10 @@ Variable map:
             addr=None
         ):
         #pprint(tree)
+
         var_asign = False
         math = False
+        n_var = None
         operation = ''
         operations = {
                     "ADD": "add",
@@ -497,11 +504,13 @@ Variable map:
                 _type = self.variables[from_var]['type']
                 n_var = _var
                 _var = from_var
-                _value = ''
+                _value = 'x' # Placeholder for ord's original value
                 n_value = self.variables[from_var]['val']
                 var_asign = True
-                _pos = self.nextaddr
-                self.nextaddr = _pos + round(40/8)
+                # TESTING bound_disk shit here
+                _pos = self.variables[n_var]['pos']
+                #_pos = self.nextaddr
+                #self.nextaddr = _pos + round(40/8)
 
             # Process value?
             # We may need another function to process this
@@ -598,6 +607,10 @@ Variable map:
         if _pos > self.bitstart:
             _pos = _pos - self.bitstart
 
+        # if _var == "bound_disk" or n_var == "bound_disk":
+        #     print("Trying to reassign bound_disk", self.variables["bound_disk"], self.namespace, _pos, addr, unsafe, tree)
+        #     input()
+
         if var_asign:
             self.fin.append(
                     f'''
@@ -666,6 +679,7 @@ Variable map:
 
     def create_variable(self, tree=None, custom_constructor={}, custom_pos=False):
         meta = {}
+        var = None
         math = False
         inthex = "#"
 

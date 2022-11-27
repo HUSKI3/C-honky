@@ -33,6 +33,7 @@ f.close()
 
 print("Variables:")
 pprint(t.variables)
+print("Asm generation completed")
 
 
 from asm import Loader
@@ -40,6 +41,7 @@ l = Loader(
     'out.asm',
     argv[2]
 )
+
 
 # Write debug
 if "d" in flags.split():
