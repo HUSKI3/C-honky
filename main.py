@@ -1377,10 +1377,12 @@ Variable map:
         {comparison}
         
         {code}
+        ldr r18, ._while_end_{label}
+        ldr r15, ._while_start_{label}
         jpr r15
         ._while_end_{label}
         
-        ldr r26, #0
+        ; ldr r26, #0
         '''
 
         # Create internal program
@@ -1483,11 +1485,15 @@ Variable map:
         {code}
         
         ; Jump to ._else_end_{label} if code has been run
+        ldr r17, ._if_end_{label}
+        ldr r16, ._else_end_{label}
         jpr r16
         ._if_end_{label}
         {else_code}
+        ldr r17, ._if_end_{label}
+        ldr r16, ._else_end_{label}
         ._else_end_{label}
-        ldr r26, #0
+        ; ldr r26, #0
         '''
 
         # Create internal program
