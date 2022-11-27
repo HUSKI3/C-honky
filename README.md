@@ -1,4 +1,5 @@
 
+
 <h1 align="center">C-honky</h1>
 
 <div align="center">
@@ -81,8 +82,50 @@ HelloWorld(1);
 
 ## Libraries
 Currently C-honky has the following libraries:
-
-- gl.ck - Graphics library
 - std.ck - Standard library
+- gl.ck - Graphics library
 - disk.ck - Abstracted Disk library
 - dif.ck - Disk Interface
+
+## Standard library
+The standard library provides the ability to write to the console, ... and panic. Not much else is implemented there yet. The `print` and `println` functions have a limit of 100 characters.
+```go
+// Hello world with a panic!
+#embed[ck] "std.ck"
+std::print("Hello ");
+std::println("world!");
+
+if (1 != 0) {
+	std::panic("[FATAL] Oh no! Math!");
+}
+```
+
+## Graphics library
+The graphics library works directly with the GPU by writing to different addresses to define properties of the triangles to be drawn, and then calls draw on them. You must clear the command fifo before writing again. 
+
+Examples:
+```go
+// Gradient triangle example
+#embed[ck] "gl.ck"
+
+// Clear screen
+GL::clear(0, 0, 0);
+
+// Colours
+int r =  50;
+int g =  150;
+int b =  200;
+
+// Triangle
+GL::tri( 120, 400,
+	520, 400,
+	320, 100,
+	r, g, b,
+	b, g, r,
+	g, r, b
+);
+
+GL::draw_double();
+```
+
+## Disk and others are a WIP
