@@ -591,13 +591,12 @@ Variable map:
             else:
                 math_operation = f"{operation} r{registers[0]}, r{registers[1]}, r{registers[0]}"
 
-
             final_template = f'''
             {first_teplate}
             {second_teplate}
             {math_operation}
             ; Store the result
-            ldr r11, {hex(_pos+self.bitstart)}
+            ldr r11, {hex(int(_pos, 0)+self.bitstart)}
             mov r20, r{registers[0]}
             ldr r0, $2
             jpr r4
@@ -605,7 +604,10 @@ Variable map:
         
         if addr:
             _pos = addr
-            
+        
+        if type(_pos) == str:
+            _pos = int(_pos, 0)
+
         if _pos > self.bitstart:
             _pos = _pos - self.bitstart
 
@@ -628,6 +630,7 @@ Variable map:
         elif math:
             self.fin.append(final_template)
         else:
+            print(_pos)
             self.fin.append(
                     f'''
                     ; {_var} reassignment to {_value}
