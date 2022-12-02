@@ -51,15 +51,15 @@ class Transpiler:
     def __init__(
             self,
             tree,
-            nextaddr = 0,
+            nextaddr = 0x0,
             variables = {}, #Dictlist(),
             functions = {},
             arguments = {},
             label_count = 0,
             bitdata_nextaddr = 0x0,
             namespace = 'main::',
-            bitstart = 10000000,
-            bitdata  = 10200001
+            bitstart = hex(10000000),
+            bitdata  = hex(10200001)
         ) -> None:
         self.code = tree
         self.actions = {
@@ -146,6 +146,8 @@ Variable map:
             pos = _arg[1]
 
         #print(f"PUTCHAR ({_arg}) @ {pos}")
+
+        pos = hex(pos)
         
         self.fin.append(
             f'''
@@ -239,7 +241,7 @@ Variable map:
 
         self.fin.append(
                 f'''
-                ldr r11, {_pos[1]}
+                ldr r11, {hex(_pos[1])}
                 ldr r20, #{_value[1]}
                 ldr r0, $2
                 jpr r4
@@ -253,7 +255,7 @@ Variable map:
         if _var not in self.variables:
             raise TranspilerExceptions.UnkownVar(_var, self.variables.keys)
         
-        addr = self.variables[_var]['pos'] + self.bitstart
+        addr = hex(self.variables[_var]['pos'] + self.bitstart)
 
         # get the var pos, load, add 1, write
         self.fin.append(f'''
@@ -275,7 +277,7 @@ Variable map:
         if _var not in self.variables:
             raise TranspilerExceptions.UnkownVar(_var, self.variables.keys)
         
-        addr = self.variables[_var]['pos'] + self.bitstart
+        addr = hex(self.variables[_var]['pos'] + self.bitstart)
 
         # get the var pos, load, add 1, write
         self.fin.append(f'''
@@ -439,7 +441,7 @@ Variable map:
         '''
         
         self.fin_funcs.append(
-            base.format(name = _name, program = _program, _items = _items, ret_pos=x['pos']+self.bitstart)
+            base.format(name = _name, program = _program, _items = _items, ret_pos=hex(x['pos']+self.bitstart))
         )
         self.functions[_name] = {'tree':tree, 'instance': _t}
 
@@ -535,7 +537,7 @@ Variable map:
             if _var not in self.variables:
                 raise TranspilerExceptions.UnkownVar(_var, self.variables.keys)
 
-            _pos = self.variables[_var]['pos']
+            _pos = hex(self.variables[_var]['pos'])
 
             registers = [12, 13]
             var_template = '''
@@ -557,7 +559,7 @@ Variable map:
                     raise TranspilerExceptions.UnkownVar(first, self.variables.keys)
                 var = self.variables[first]
                 first_teplate = var_template.format(
-                    addr = var['pos']+self.bitstart,
+                    addr = hex(var['pos']+self.bitstart),
                     var = first,
                     reg = registers[0]
                 )
@@ -573,7 +575,7 @@ Variable map:
                     raise TranspilerExceptions.UnkownVar(second, self.variables.keys)
                 var = self.variables[second]
                 second_teplate = var_template.format(
-                    addr = var['pos']+self.bitstart,
+                    addr = hex(var['pos']+self.bitstart),
                     var = second,
                     reg = registers[1]
                 )
@@ -595,7 +597,7 @@ Variable map:
             {second_teplate}
             {math_operation}
             ; Store the result
-            ldr r11, {_pos+self.bitstart}
+            ldr r11, {hex(_pos+self.bitstart)}
             mov r20, r{registers[0]}
             ldr r0, $2
             jpr r4
@@ -614,11 +616,11 @@ Variable map:
         if var_asign:
             self.fin.append(
                     f'''
-                    ; {n_var} reassignment from {from_var} at {from_var_pos}
-                    ldr r11, {from_var_pos+self.bitstart}
+                    ; {n_var} reassignment from {from_var} at {hex(from_var_pos)}
+                    ldr r11, {hex(from_var_pos+self.bitstart)}
                     ldr r0, $2
                     jpr r2
-                    ldr r11, {_pos+self.bitstart}
+                    ldr r11, {hex(_pos+self.bitstart)}
                     ldr r0, $2
                     jpr r4
                     '''
@@ -629,7 +631,7 @@ Variable map:
             self.fin.append(
                     f'''
                     ; {_var} reassignment to {_value}
-                    ldr r11, {_pos+self.bitstart}
+                    ldr r11, {hex(_pos+self.bitstart)}
                     ldr r20, #{_value}
                     ldr r0, $2
                     jpr r4
@@ -809,15 +811,17 @@ Variable map:
         if type(_value) == list and len(_value) > 2 and type(_value[2]) == int:
             pos = _value[2]
         else:
+            if type(self.nextaddr) != str:
+                self.nextaddr = hex(self.nextaddr)
             pos = self.nextaddr
-            self.nextaddr = self.nextaddr + round(bitlength / 8)
+            self.nextaddr = hex(int(pos, 16) + round(bitlength / 8))
         
         array_elem = False
         if type(_value) == list and len(_value) > 2 and _value[2] == 'ARRAY_ELEM':
             # Fuck me sideways, time to grab the value from the address
             load_from_addr_template = f'''
-            ; Load value for {_var} from {_value[1]}
-            ldr r11, {_value[1]}
+            ; Load value for {_var} from {hex(_value[1])}
+            ldr r11, {hex(_value[1])}
             ldr r0, $2
             jpr r2
             mov r28, r20
@@ -853,7 +857,7 @@ Variable map:
                     raise TranspilerExceptions.UnkownVar(first, self.variables.keys)
                 var = self.variables[first]
                 first_teplate = var_template.format(
-                    addr = var['pos']+self.bitstart,
+                    addr = hex(var['pos']+self.bitstart),
                     var = first,
                     reg = registers[0]
                 )
@@ -869,7 +873,7 @@ Variable map:
                     raise TranspilerExceptions.UnkownVar(second, self.variables.keys)
                 var = self.variables[second]
                 second_teplate = var_template.format(
-                    addr = var['pos']+self.bitstart,
+                    addr = hex(var['pos']+self.bitstart),
                     var = second,
                     reg = registers[1]
                 )
@@ -893,6 +897,8 @@ Variable map:
             mov r20, r{registers[0]}
             '''
 
+        if pos:
+            pos = int(pos, 0)
 
         # Add to map, but check flags first
         if array_elem:
@@ -906,7 +912,7 @@ Variable map:
                 f'''
                 {load_from_addr_template}
                 ; standard construction for {_var}
-                ldr r11, {pos+ self.bitstart}
+                ldr r11, {hex(pos+ self.bitstart)}
                 mov r20, r28
                 ldr r0, $2
                 jpr r4
@@ -926,12 +932,12 @@ Variable map:
                 "type":_value[0],
                 "meta": meta
             }
-            print(f"({_var}) -> {_value}\nValue: {_value[1]}\nPosition: {pos} ({pos + self.bitstart})\nBitLength: {bitlength}\nNextAddr: {self.nextaddr}")
+            print(f"({_var}) -> {_value}\nValue: {_value[1]}\nPosition: {pos} ({hex(pos + self.bitstart)})\nBitLength: {bitlength}\nNextAddr: {self.nextaddr}")
             self.fin.append(
                 f'''
                 ; math construction for {_var}
                 {final_template}
-                ldr r11, {pos + self.bitstart}
+                ldr r11, {hex(pos + self.bitstart)}
                 ldr r0, $2
                 jpr r4
                 '''
@@ -949,11 +955,11 @@ Variable map:
                 "type":_value[0],
                 "meta": meta
             }
-            print(f"({_var}) -> {_value}\nValue: {_value[1]}\nPosition: {pos} ({pos + self.bitstart})\nBitLength: {bitlength}\nNextAddr: {self.nextaddr}")
+            print(f"({_var}) -> {_value}\nValue: {_value[1]}\nPosition: {pos} ({hex(pos + self.bitstart)})\nBitLength: {bitlength}\nNextAddr: {self.nextaddr}")
             self.fin.append(
                 f'''
                 ; standard construction for {_var}
-                ldr r11, {pos + self.bitstart}
+                ldr r11, {hex(pos + self.bitstart)}
                 ldr r20, {inthex}{_value[1]}
                 ldr r0, $2
                 jpr r4
@@ -969,7 +975,7 @@ Variable map:
             self.fin.append(
                 f'''
                 ; custom_constructor: {custom_pos} {custom_constructor}
-                ldr r11, {pos + self.bitstart}
+                ldr r11, {hex(pos + self.bitstart)}
                 ldr r20, #{_value}
                 ldr r0, $2
                 jpr r4
@@ -1093,8 +1099,8 @@ Variable map:
         self.variables[varname] = var
 
         t = template.format(
-            addr = addr,
-            varaddr = var['pos'] + self.bitstart,
+            addr = hex(addr),
+            varaddr = hex(var['pos'] + self.bitstart),
             ldinst = type_instrs_ld[inst_type],
             stdinst = type_instrs_st[inst_type]
         )
@@ -1147,7 +1153,7 @@ Variable map:
                     raise TranspilerExceptions.UnkownVar(first, self.variables.keys)
                 var = self.variables[first]
                 first_teplate = var_template.format(
-                    addr = var['pos']+self.bitstart,
+                    addr = hex(var['pos']+self.bitstart),
                     var = first,
                     reg = registers[0]
                 )
@@ -1163,7 +1169,7 @@ Variable map:
                     raise TranspilerExceptions.UnkownVar(second, self.variables.keys)
                 var = self.variables[second]
                 second_teplate = var_template.format(
-                    addr = var['pos']+self.bitstart,
+                    addr = hex(var['pos']+self.bitstart),
                     var = second,
                     reg = registers[1]
                 )
@@ -1208,7 +1214,7 @@ Variable map:
                 ldr r20, #{value}
                 '''
             elif value[0] == "ID":
-                varaddr = self.variables[self.evaluate(value)]['pos'] + self.bitstart
+                varaddr = hex(self.variables[self.evaluate(value)]['pos'] + self.bitstart)
                 final_template = f'''
                 ldr r11, {varaddr}
                 ldr r0, $2
@@ -1300,8 +1306,8 @@ Variable map:
 
         # Allocate address for the head
         if not unsafe:
-            addr = self.nextaddr
-            self.nextaddr = addr + round(40/8)
+            addr = int(self.nextaddr, 0)
+            self.nextaddr = hex(addr + round(40/8))
         else:
             unsafe = addr
 
@@ -1346,6 +1352,8 @@ Variable map:
         setattr(self, tree['KEY'], value)
         if tree['KEY'] == 'bitdata':
             self.bitdata = int(tree['VALUE'][1]['VALUE'], 16)
+        if tree['KEY'] == 'bitstart':
+            self.bitstart = int(tree['VALUE'][1]['VALUE'], 16)
 
     def create_dyn_while(self, tree):
         #pprint(tree)
@@ -1424,7 +1432,7 @@ Variable map:
             if first_var not in self.variables:
                 raise TranspilerExceptions.UnkownVar(first_var, self.variables.keys)
             else: first_var_tree = load_var_template.format(
-                var = self.bitstart +  self.variables[first_var]['pos']
+                var = hex(self.bitstart +  self.variables[first_var]['pos'])
             )
         else:
             first_var_tree = raw_val_template.format(
@@ -1435,7 +1443,7 @@ Variable map:
             if second_var not in self.variables:
                 raise TranspilerExceptions.UnkownVar(second_var, self.variables.keys)
             else: second_var_tree = load_var_template.format(
-                var = self.bitstart +  self.variables[second_var]['pos']
+                var = hex(self.bitstart +  self.variables[second_var]['pos'])
             )
         else:
             second_var_tree = raw_val_template.format(
@@ -1544,7 +1552,7 @@ Variable map:
             if first_var not in self.variables:
                 raise TranspilerExceptions.UnkownVar(first_var, self.variables.keys)
             else: first_var_tree = load_var_template.format(
-                var = self.bitstart +  self.variables[first_var]['pos']
+                var = hex(self.bitstart +  self.variables[first_var]['pos'])
             )
         else:
             first_var_tree = raw_val_template.format(
@@ -1555,7 +1563,7 @@ Variable map:
             if second_var not in self.variables:
                 raise TranspilerExceptions.UnkownVar(second_var, self.variables.keys)
             else: second_var_tree = load_var_template.format(
-                var = self.bitstart +  self.variables[second_var]['pos']
+                var = hex(self.bitstart +  self.variables[second_var]['pos'])
             )
         else:
             second_var_tree = raw_val_template.format(
@@ -1585,7 +1593,7 @@ Variable map:
             self.labelcounter = _t.labelcounter 
 
             # Set main nextaddr to _t nextaddr
-            self.nextaddr = _t.nextaddr
+            self.nextaddr = hex(_t.nextaddr)
             _else_program = '\n'.join(_t.fin)
 
             # Update our variables
