@@ -6,6 +6,7 @@ class ChLexer(Lexer):
         FLOAT,
         INT,
         HEX,
+        CHAR,
         FUNC,
         CLASS,
         ARRAY,
@@ -93,6 +94,7 @@ class ChLexer(Lexer):
     PYTHON_CODE = r"\$`[.\W\w]*?`"
     PYTHON_CODE_EXEC = r"\$e`[.\W\w]*?`"
     STRING = r'"[\s\S]*?"' #r"(\".*?(?<!\\)(\\\\)*\"|'.*?(?<!\\)(\\\\)*')"
+    CHAR = r"'[\s\S]*?'"
     ID = r"(--[a-zA-Z_]([a-zA-Z0-9_]|!)*--|[a-zA-Z_]([a-zA-Z0-9_]|!)*)"
     ID["func"] = FUNC
     ID["class"] = CLASS
