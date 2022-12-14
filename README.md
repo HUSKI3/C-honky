@@ -1,3 +1,4 @@
+> :warning: **C-Honky compiler is being rewritten**: This is due to numerous issues found with the old approach. We could no longer scale that code base. Currently the entire C-Honky -> ChonkyAssembly compiler is being rewritten  
 
 ![img](https://github.com/HUSKI3/C-honky/blob/main/img/Ch.png)
 <h1 align="center">C-honky</h1>
