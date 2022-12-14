@@ -84,11 +84,26 @@ class Compiler:
         arguments = {},
         label_count = 0,
         bitdata_nextaddr = 0,
-        namespace = 'main',
-        bitstart = "0x10000000",
-        bitdata  = "0x10200001"
+        namespace = 'sub_main',
+        bitstart = None,
+        bitdata  = None,
+        inherit = False
     ):
-        instance = Compiler(
+        if inherit:
+            instance = Compiler(
+            tree,
+            self.nextaddr,
+            variables,
+            functions,
+            arguments,
+            self.labelcounter,
+            self.bitdata_nextaddr,
+            namespace,
+            self.bitstart,
+            self.bitdata
+        )
+        else:
+            instance = Compiler(
             tree,
             nextaddr,
             variables,

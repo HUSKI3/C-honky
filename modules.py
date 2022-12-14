@@ -89,7 +89,7 @@ class PutCharMod(Module):
 
         self.raw_template = '''
         ; load {arg}
-        ldr r20, {arg}
+        ldr r20, #{arg}
         '''
 
         self.var_template = '''
@@ -130,7 +130,7 @@ class PutCharMod(Module):
         else:
             # Assume we are handling a raw value
             if isinstance(varval, Char):
-                val = varval.value
+                val = str(varval.value) # Raw value must be denoted as int
             else:
                 raise Exception(f"[PUTCHAR] Invalid type supplied, Got: {type(varval)} Expected: 'Char()'")
 
@@ -165,7 +165,11 @@ class ResolutionMod(Module):
             return HexInt32(tree[1]['VALUE'])
 
         elif tree[0] == 'CHAR':
-            return Char(tree[1]['VALUE'][0])
+            # if the actual type is string, there will be an array in place of the value
+            if type(tree[1]['VALUE']) == tuple:
+                return Char(tree[1]['VALUE'][0])
+            else:
+                return Char(tree[1]['VALUE'])
         
         elif tree[0] == 'ID':
 
@@ -216,7 +220,7 @@ class FunctionCallMod(Module):
                 built = func(arguments['POSITIONAL_ARGS'])
             elif funcname in self.compiler_instance.functions:
                 # Get the function's compiler instance
-                func_instance = self.compiler_instance.functions[funcname]['object']
+                func_instance: Compiler = self.compiler_instance.functions[funcname]['object']
 
                 # Dependencies
                 resolution_module: Module = func_instance.get_action('RESOLUT')
@@ -225,8 +229,6 @@ class FunctionCallMod(Module):
 
                 if arguments:
                     arguments = arguments['POSITIONAL_ARGS']
-
-                    print(arguments)
 
                     # Process supplied arguments
                     for i, arg in enumerate(func_instance.arguments):
@@ -237,19 +239,19 @@ class FunctionCallMod(Module):
 
                         current_supplied = resolution_module(current_supplied_raw, no_construct=True)
                         
-                        # Debug
-                        print(current_supplied)
-                        print(name, argtype, pos)
-                        #
+                        # # Debug
+                        # print(current_supplied)
+                        # print(name, argtype, pos)
+                        # #
 
                         if isinstance(current_supplied, ID):
                             raise Exception("Not Implemented")
                         else:
                             # Check the type of the supplied argument
-                            if current_supplied_raw[0].lower() != argtype:
+                            if type(current_supplied).abbr_name != argtype:
                                 raise TranspilerExceptions.TypeMissmatch(
                                     name,
-                                    current_supplied_raw[0].lower(),
+                                    current_supplied,
                                     argtype,
                                     tree['ID'][-1]
                                 )
@@ -266,8 +268,14 @@ class FunctionCallMod(Module):
                                 }
 
                             # Reassign value
-                            reassign_module(
-                                new_tree
+                            new_value_for_var = reassign_module(
+                                new_tree,
+                                redirect=True
+                            )
+
+                            # Append to instance finals
+                            self.compiler_instance.finished.append(
+                                new_value_for_var
                             )
                 
                 built = self.standard.format(
@@ -291,7 +299,7 @@ class FunctionDecMod(Module):
             ldr r11, {ret_pos}
             mov r20, r0
             ldr r0, $2
-            jpr r4
+            jpr r1
             ; BODY
             {program}
             ; BODY END
@@ -316,45 +324,57 @@ class FunctionDecMod(Module):
         line = tree['RETURNS_TYPE'][-1]
 
         funcname = tree['ID']
-        arguments = tree['FUNCTION_ARGUMENTS']['POSITIONAL_ARGS']
+        arguments = tree['FUNCTION_ARGUMENTS']
         program  = tree['PROGRAM']
         returns  = tree['RETURNS_TYPE'][1]['VALUE']
+
+        if arguments:
+            arguments = arguments['POSITIONAL_ARGS']
         
         console.log(f"[FunctionDecMod] {funcname}({arguments}) -> {returns}")
 
         # Need to process the program
         instance = self.compiler_instance.new_instance(
             tree = program,
-            variables=self.compiler_instance.variables,
-            functions=self.compiler_instance.functions,
+            variables=self.compiler_instance.variables.copy(),
+            functions=self.compiler_instance.functions.copy(),
+            inherit=True
         )
-
-        instance.run()
 
         # Local dependency
         cvariable_module: Module = instance.get_action('VARIABLE_ASSIGNMENT')
 
         # Process variables that the function takes
         processed_arguments = {}
+        var_asm = []
         if arguments:
             for arg in arguments:
                 # Hype
                 name = arg[1]['ID']
                 type = arg[1]['TYPE']
 
-                cvariable_module(
+                cur_var_asm = cvariable_module(
                     {
                         "ID": name,
                         "TYPE": type,
                         "EXPRESSION": (type.upper(), {"VALUE": "0"})
                     }
                 )
+                var_asm.append(cur_var_asm)
                 pos = instance.get_variable(name)['pos']
 
                 processed_arguments[name] = pos
 
                 # Save arguments to our instance
                 instance.arguments[name] = {'pos': pos, 'type': type}
+                instance.variables[name] = {'pos': pos, 'type': type}
+
+        # Run the instance
+        instance.run()
+
+        # Add our constructor to the parent instance
+        for asm in var_asm:
+            self.compiler_instance.finished.append(asm)
 
         body = instance.finished
 
@@ -472,7 +492,15 @@ class VariableReAssignMod(Module):
         
         self.template = "\t\t; Empty block. Reassignment uses the VariableAssignMod module, so check the above."
 
+        self._internal = ""
+
         self.compiler_instance: Compiler = compiler_instance
+
+    def __call__(self, tree, redirect=False):
+        # Override the standard call, this let's us feed it another parameter 
+        self.redirect = redirect
+        initial = super().__call__(tree)
+        return self._internal + initial
     
     def proc_tree(self, tree):
         # Dependency
@@ -496,6 +524,9 @@ class VariableReAssignMod(Module):
             custom_pos = varpos
         )
 
-        self.compiler_instance.finished.append(asm)
+        if self.redirect:
+            self._internal = asm
+        else:
+            self.compiler_instance.finished.append(asm)
 
         return {}
