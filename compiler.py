@@ -25,7 +25,8 @@ class Compiler:
         bitdata_nextaddr = 0,
         namespace = 'main',
         bitstart = "0x10000000",
-        bitdata  = "0x10200001"
+        bitdata  = "0x10200001",
+        warnings = 0
     ) -> None:
         self.code = tree
 
@@ -44,6 +45,8 @@ class Compiler:
         self.namespace = namespace
         self.namespaces = {}
         self._modules = {}
+
+        self.warnings = warnings
 
         self.line = 1
 
@@ -100,7 +103,8 @@ class Compiler:
             self.bitdata_nextaddr,
             namespace,
             self.bitstart,
-            self.bitdata
+            self.bitdata,
+            self.warnings
         )
         else:
             instance = Compiler(
@@ -113,7 +117,8 @@ class Compiler:
             bitdata_nextaddr,
             namespace,
             bitstart,
-            bitdata
+            bitdata,
+            self.warnings
         )
 
         # Modules and actions need to be recreated with a new scope
@@ -160,6 +165,13 @@ class Compiler:
         self.nextaddr += size
         return hex(pos)
 
+    def new_label(
+        self
+    ) -> int:
+        label = self.labelcounter
+        self.labelcounter += 1
+        return label
+
     def sync(
         self,
         instance
@@ -169,6 +181,13 @@ class Compiler:
         """
         self.nextaddr = instance.nextaddr
         self.bitdata_nextaddr = instance.bitdata_nextaddr
+        self.labelcounter = instance.labelcounter
+        self.warnings = instance.warnings
+    
+    def warn(
+        self
+    ):
+        self.warnings += 1
 
     def get_variable(
         self,
@@ -184,6 +203,8 @@ class Compiler:
         self,
         name: str, 
         pos: int,
+        type,
+        obj,
         force = False
     ) -> None:
         if name in self.variables and not force:
@@ -192,6 +213,8 @@ class Compiler:
         
         self.variables[name] = {
                 "pos": pos,
+                "type": type,
+                "object": obj
             }
     
     def create_function(

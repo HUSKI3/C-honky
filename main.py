@@ -9,7 +9,8 @@ from modules import (
     ResolutionMod,
     VariableAssignMod,
     FunctionDecMod,
-    VariableReAssignMod
+    VariableReAssignMod,
+    ConditionalMod
 )
 
 import pprint
@@ -95,7 +96,8 @@ with Progress(
         ResolutionMod,
         VariableAssignMod,
         FunctionDecMod,
-        VariableReAssignMod
+        VariableReAssignMod,
+        ConditionalMod
     ])
 
 
@@ -147,4 +149,4 @@ l = Loader(
     argv[2]
 )
 open(argv[2], 'wb+').write(l.Processed)
-print(f"\n[bold green]Binary build complete :heavy_check_mark: [/bold green]")
+print(f"\n[bold green]Binary build complete with {root_compiler_instance.warnings} warnings :heavy_check_mark: [/bold green]")

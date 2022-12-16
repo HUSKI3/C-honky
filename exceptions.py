@@ -7,7 +7,7 @@ class TranspilerExceptions:
             Exception.__init__(self, f"For {var}, got: {got}, value overflows the given size of {expected}")
     class UnkownVar(Exception):
         def __init__(self, var, vars):
-            Exception.__init__(self, f"Got unknown '{var}'. Variables only contain: {list(vars.keys())}")
+            Exception.__init__(self, f"Got unknown '{var}'. Variables in the current scope only contain: {list(vars.keys())}")
     class VarExists(Exception):
         def __init__(self, var):
             Exception.__init__(self, f"Got '{var}'. This variable already exists in this scope")

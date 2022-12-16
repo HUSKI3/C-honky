@@ -49,3 +49,16 @@ class HexInt32:
         self.length = len(value)
         self.size = Int32.size
         self.hex = True
+
+class List:
+    '''
+    Simple static length list type
+    '''
+    size = 0
+    abbr_name = 'list'
+    def __init__(self, values, type):
+        self.value = values
+        self.length = len(values)
+        self.size = List.size
+        self.offset = 0
+        self.type = type
