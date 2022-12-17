@@ -1,5 +1,5 @@
 from lexer import ChLexer
-from parser import ChParser
+from parserr import ChParser
 from compiler import Compiler
 from exceptions import *
 from modules import (

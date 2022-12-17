@@ -583,6 +583,27 @@ class VariableAssignMod(Module):
         jpr r1
         """
 
+        self.pointer = """
+        ; pointer construction for {var}
+        ldr r11, {pos}
+        ldr r20, {value}
+        stw r20, r11
+        """
+
+        self.deref = """
+        ; deref for {var}
+        ldr r11, {from_pos}
+        ldw r20, r11
+        mov r11, r20
+        ldr r1, .{read_action}
+        ldr r0, $2
+        jpr r1
+        ldr r11, {pos}
+        ldr r1, .{load_action}
+        ldr r0, $2
+        jpr r1
+        """
+
         self.from_pos = """
         ; load value from position {from_pos}
         ldr r11, {from_pos}
@@ -633,7 +654,9 @@ class VariableAssignMod(Module):
 
         special_types = {
             'list': List,
-            'id': ID
+            'id': ID,
+            'pointer': None,
+            'deref': None
         }
 
         load_to_mem_actions = {
@@ -648,7 +671,7 @@ class VariableAssignMod(Module):
             4: 'cmemw'
         }
 
-        if vartype not in types and vartype not in special_types:
+        if vartype.lower() not in types and vartype.lower() not in special_types:
             raise TranspilerExceptions.UnkownType(vartype)
 
         # Check type of construction
@@ -766,6 +789,69 @@ class VariableAssignMod(Module):
                     List(items, types[check_against.lower()])
                 )
                 constructor = f"{''.join(final_asm_items)}\n\t\t; List contents above"
+            elif expr[0].lower() == 'pointer':
+                pprint(tree)
+
+                from_var = self.compiler_instance.get_variable(expr[1]['ID'])
+
+                # Set bitsize
+                bitsize = 4
+
+                # Check if we have a position
+                if self.custom_pos is not None:
+                    position = self.custom_pos
+                else:
+                    # Calculate next position
+                    position = self.compiler_instance.allocate(bitsize)
+
+                constructor = self.pointer.format(
+                    var = var,
+                    pos = position,
+                    value = from_var['pos'],
+                )
+
+                # Create variable inside the instance
+                if not self.no_add:
+                    self.compiler_instance.create_variable(
+                        var,
+                        position,
+                        type = from_var['type'],
+                        obj = from_var['type'],
+                        force = True if self.compiler_instance is not None else False
+                    )
+            elif expr[0].lower() == 'deref':
+                pprint(tree)
+
+                from_var = self.compiler_instance.get_variable(expr[1]['ID'])
+
+                # Set bitsize
+                bitsize = 4
+
+                # Check if we have a position
+                if self.custom_pos is not None:
+                    position = self.custom_pos
+                else:
+                    # Calculate next position
+                    position = self.compiler_instance.allocate(bitsize)
+
+                constructor = self.deref.format(
+                    var = var,
+                    pos = position,
+                    from_pos = from_var['pos'],
+                    load_action = load_to_mem_actions[from_var['type'].size],
+                    read_action = read_from_mem_actions[from_var['type'].size]
+                )
+
+                # Create variable inside the instance
+                if not self.no_add:
+                    self.compiler_instance.create_variable(
+                        var,
+                        position,
+                        type = from_var['type'],
+                        obj = from_var['type'],
+                        force = True if self.compiler_instance is not None else False
+                    )
+
 
         elif expr[0] == 'GET_INDEX':
 

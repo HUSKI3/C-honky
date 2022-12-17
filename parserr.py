@@ -831,7 +831,7 @@ class ChParser(Parser):
     
     @_("'*' ID")
     def expression(self, p):
-        return ("RESOLVE", {"ID": p.ID}, p.lineno)
+        return ("DEREF", {"ID": p.ID}, p.lineno)
 
     @_("'-' expression %prec UMINUS")
     def expression(self, p):
