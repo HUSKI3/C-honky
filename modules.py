@@ -1638,6 +1638,9 @@ class VariableAssignMod(Module):
             elif expr[0].lower() == 'pointer':
                 pprint(tree)
 
+                if tree['TYPE'] not in ('int', 'int32'):
+                    raise TranspilerExceptions.TypeMissmatch(var, tree['TYPE'], 'Int32', expr[-1])
+
                 from_var = self.compiler_instance.get_variable(expr[1]['ID'])
 
                 # Set bitsize
