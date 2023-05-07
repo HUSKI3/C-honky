@@ -51,10 +51,6 @@
 Hello world in C-honky:
 ```go
 // test.ck
-#mode "kernel";
-#bitstart 10000000;
-#bitend 10004000;
-#bitdata 10002000;
 // Include our standard library
 #embed[ck] "std.ck"
 
