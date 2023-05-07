@@ -79,6 +79,7 @@ HelloWorld(1);
 
 ## Libraries
 ![img](https://github.com/HUSKI3/C-honky/blob/main/img/boot.png)
+
 Currently C-honky has the following libraries:
 - [std.ck](https://github.com/HUSKI3/C-honky/blob/main/libs/std.ck) - Standard library
 - [gl.ck](https://github.com/HUSKI3/C-honky/blob/main/libs/gl.ck)  - Graphics library
