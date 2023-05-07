@@ -1,5 +1,5 @@
 from exceptions import ModuleExceptions, TranspilerExceptions
-from chonkytypes import String, Char, Int8, Int32, HexInt32, ID, List
+from chonkytypes import String, Char, Int8, Pointer, Int32, HexInt32, ID, List
 from compiler import * # For the Compiler class autocomplete
 from numba import jit, njit
 
@@ -196,8 +196,10 @@ class ResolutionMod(Module):
                 return Char(tree[1]['VALUE'])
         
         elif tree[0] == 'ID':
-
             return ID(tree[1]['VALUE'])
+        
+        elif tree[0] == 'POINTER':
+            return Pointer(tree[1]['ID'])
 
         raise Exception(f"[RESOLUT] Failed to match {tree} is '{tree[0]}' supported?")
     
@@ -646,6 +648,7 @@ class ConditionalMod(Module):
                 read_type = var['type']
 
                 read_actions = {
+                    0: 'cmemw',
                     1: 'cmemb',
                     2: 'cmemh',
                     4: 'cmemw'
@@ -1390,12 +1393,14 @@ class VariableAssignMod(Module):
         }
 
         load_to_mem_actions = {
+            0: 'lmemw',
             1: 'lmemb',
             2: 'lmemh',
             4: 'lmemw'
         }
 
         read_from_mem_actions = {
+            0: 'cmemw',
             1: 'cmemb',
             2: 'cmemh',
             4: 'cmemw'

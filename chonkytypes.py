@@ -50,6 +50,15 @@ class Int32:
         self.size = Int32.size
         self.hex = False
 
+class Pointer:
+    '''
+    Simple pointer type
+    '''
+    size = 4
+    abbr_name = 'ptr'
+    def __init__(self, value):
+        ID.__init__(self, value)
+
 class HexInt32:
     '''
     Simple Int32 type

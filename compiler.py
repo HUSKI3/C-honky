@@ -238,7 +238,7 @@ class Compiler:
         obj,
         force = False
     ) -> None:
-        if name in self.variables and not force:
+        if name in self.variables and not force and name != '_':
             print(f"At {self.line}")
             raise TranspilerExceptions.VarExists(name)
         
