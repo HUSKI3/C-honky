@@ -25,7 +25,7 @@
     </a>
     <span> | </span>
     <a href="https://github.com/HUSKI3/Makex">
-      MakeX (Make executables for ChonkPC)
+      MakeX (Make executables)
     </a>
   </h3>
 </div>
