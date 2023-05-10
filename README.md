@@ -23,6 +23,10 @@
     <a href="https://github.com/HUSKI3/C-honky/wiki/Getting-started">
       Handbook
     </a>
+    <span> | </span>
+    <a href="https://github.com/HUSKI3/Makex">
+      MakeX (Make executables for ChonkPC)
+    </a>
   </h3>
 </div>
 
