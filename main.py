@@ -17,7 +17,9 @@ from modules import (
     ClassDeclarationMod,
     WhileMod,
     AdvancedWriteMod,
-    ValueAtPointerMod
+    ValueAtPointerMod,
+    IncrementMod,
+    GotoMod
 )
 
 import pprint
@@ -113,7 +115,9 @@ with Progress(
         ClassDeclarationMod,
         WhileMod,
         AdvancedWriteMod,
-        ValueAtPointerMod
+        ValueAtPointerMod,
+        IncrementMod,
+        GotoMod
     ])
 
 
@@ -131,7 +135,7 @@ except TranspilerExceptions.UnknownActionReference as e:
 
 if failed:
     print(f"\n[bold red]Assembly build failed :cross_mark: [/bold red]")
-    quit()
+    quit(1)
 else:
     print(f"\n[bold green]Assembly build complete :heavy_check_mark: [/bold green]")
     final_asm = '\n'.join(root_compiler_instance.finished)

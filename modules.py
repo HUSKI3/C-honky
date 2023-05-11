@@ -1897,6 +1897,91 @@ class VariableAssignMod(Module):
         else:
             return True
 
+
+class GotoMod(Module):
+    name="GOTO"
+    type = Module.MODULE_TYPES.SPECIAL_ACTION
+
+    def __init__(self, compiler_instance):
+        super().__init__()
+
+        self.template_s = """
+        ; a at {addr}
+        ldr r11, {addr}
+
+        ; read address from a
+        ldr r1, .cmemw
+        ldr r0, $2
+        jpr r1
+
+        jpr r20
+        """
+        
+        self.template = """
+        ; GOTO
+        {constructor}
+        """
+
+        self._internal = ""
+
+        self.compiler_instance: Compiler = compiler_instance
+
+    def __call__(self, tree, op=1):
+
+        initial = super().__call__(tree, op=op)
+        return self._internal + initial
+    
+    def proc_tree(self, tree):
+        print(tree)
+
+        var = tree['ID']
+
+        var_dict = self.compiler_instance.get_variable(var)
+        var_pos  = var_dict['pos']
+
+        constructor = self.template_s.format(
+            addr = var_pos
+        )
+        
+        return {"constructor": constructor}
+
+# TODO: Finish implementing Increment and Decrement
+class IncrementMod(Module):
+    name="INCREMENT"
+    type = Module.MODULE_TYPES.SPECIAL_ACTION
+
+    def __init__(self, compiler_instance):
+        super().__init__()
+        
+        self.template = """
+        ; INCREMENT
+        {constructor}
+        """
+
+        self._internal = ""
+
+        self.compiler_instance: Compiler = compiler_instance
+
+    def __call__(self, tree, op=1):
+
+        initial = super().__call__(tree, op=op)
+        return self._internal + initial
+    
+    def proc_tree(self, tree):
+        print(tree)
+
+        var = tree['VAR']
+
+        var_dict = self.compiler_instance.get_variable(var)
+        var_pos  = var_dict['pos']
+        var_type = var_dict['type']
+
+        constructor = "; empty constructor"
+
+        quit(1)
+
+        print(constructor)
+        return {"constructor": constructor}
     
 class ValueAtPointerMod(Module):
     name="SET_PTR"
@@ -2072,7 +2157,7 @@ class ValueAtPointerMod(Module):
                     rinst = read_from_mem_actions[bitsize_val],
                     winst = load_to_mem_actions[bitsize]
                 )
-                
+
         elif expr[0].lower() == "deref":
             value_raw = expr[1]['ID']
             value = self.compiler_instance.get_variable(value_raw)

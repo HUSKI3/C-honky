@@ -392,6 +392,16 @@ class ChParser(Parser):
             p.lineno,
         )
     
+    @_("GOTO ID")
+    def function_call(self, p):
+        return (
+            "GOTO",
+            {   
+                "ID": p.ID,
+            },
+            p.lineno,
+        )
+    
     @_("'#' DEPENDS expression")
     def function_call(self, p):
         return (

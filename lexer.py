@@ -51,7 +51,8 @@ class ChLexer(Lexer):
         SELFISH,
         ENV,
         FROM,
-        EMBED
+        EMBED,
+        GOTO
     }
     literals = {
         "+",
@@ -124,6 +125,7 @@ class ChLexer(Lexer):
     ID["env"] = ENV
     ID["from"] = FROM
     ID["embed"] = EMBED
+    ID["goto"] = GOTO
 
     TARROW = r'->'
     FARROW = r'\=\=>'
