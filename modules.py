@@ -6,7 +6,7 @@ from numba import jit, njit
 import pprint
 
 from lexer import ChLexer
-from parser import ChParser
+from cparser import ChParser
 pprint = pprint.PrettyPrinter(indent=2).pprint
 from rich.console import Console
 from rich.syntax import Syntax
