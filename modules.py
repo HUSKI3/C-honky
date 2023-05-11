@@ -1925,6 +1925,38 @@ class ValueAtPointerMod(Module):
         jpr r1
         """
 
+        self.template_ptr_to_ptr = """
+        ; a at {addr}
+        ldr r11, {addr}
+
+        ; read address from a
+        ldr r1, .cmemw
+        ldr r0, $2
+        jpr r1
+
+        mov r12, r20
+
+        ; at {addr_from}
+        ldr r11, {addr_from}
+
+        ; read addr from b
+        ldr r1, .cmemw
+        ldr r0, $2
+        jpr r1
+
+        ; read value from addr
+        mov r11, r20
+        ldr r1, .{rinst}
+        ldr r0, $2
+        jpr r1
+
+        ; write to addr that we read from a
+        mov r11, r12
+        ldr r1, .{winst}
+        ldr r0, $2
+        jpr r1
+        """
+
         self.template_to_var = """
         ; say b is at {addr}
         ldr r11, {addr}
@@ -2023,7 +2055,7 @@ class ValueAtPointerMod(Module):
                     value = value.value,
                     winst = load_to_mem_actions[bitsize]
                 )
-                
+
             elif expr[0].lower() == 'id':
                 value_raw = expr[1]['VALUE']
                 value = self.compiler_instance.get_variable(value_raw)
@@ -2040,6 +2072,23 @@ class ValueAtPointerMod(Module):
                     rinst = read_from_mem_actions[bitsize_val],
                     winst = load_to_mem_actions[bitsize]
                 )
+                
+        elif expr[0].lower() == "deref":
+            value_raw = expr[1]['ID']
+            value = self.compiler_instance.get_variable(value_raw)
+            bitsize_val = value['type'].size
+
+            ptr_var_pos = self.compiler_instance.get_variable(ptr_var)['pos']
+
+            # Set bitsize
+            bitsize = value['type'].size
+
+            constructor = self.template_ptr_to_ptr.format(
+                addr = ptr_var_pos,
+                addr_from = value['pos'],
+                rinst = read_from_mem_actions[bitsize_val],
+                winst = load_to_mem_actions[bitsize]
+            )
         else:
             raise TranspilerExceptions.IncompleteDeclaration(tree)
         

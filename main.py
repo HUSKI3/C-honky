@@ -16,7 +16,8 @@ from modules import (
     VariableReAssignAtIndexMod,
     ClassDeclarationMod,
     WhileMod,
-    AdvancedWriteMod
+    AdvancedWriteMod,
+    ValueAtPointerMod
 )
 
 import pprint
@@ -111,7 +112,8 @@ with Progress(
         VariableReAssignAtIndexMod,
         ClassDeclarationMod,
         WhileMod,
-        AdvancedWriteMod
+        AdvancedWriteMod,
+        ValueAtPointerMod
     ])
 
 
