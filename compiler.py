@@ -88,6 +88,7 @@ class Compiler:
             if action[0] == "COMPILER":
                 if action[1]['KEY'] == 'bitstart':
                     self.bitstart = int(action[1]['VALUE'][1]['VALUE'], 16)
+                    self.nextaddr = self.bitstart
             elif action[0] in self.actions:
                 ret = self.actions[action[0]](action[1], op = self.optimisation_level)
                 self._current_code = action
