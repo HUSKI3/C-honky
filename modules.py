@@ -1896,7 +1896,155 @@ class VariableAssignMod(Module):
             x += 1
         else:
             return True
+
     
+class ValueAtPointerMod(Module):
+    name="SET_PTR"
+    type = Module.MODULE_TYPES.SPECIAL_ACTION
+
+    def __init__(self, compiler_instance):
+        super().__init__()
+        
+        self.template_to_val = """
+        ; say b is at {addr}
+        ldr r11, {addr}
+
+        ; read value from r11
+        ldr r1, .cmemw
+        ldr r0, $2
+        jpr r1
+
+        ; r20 now contains the correct addr
+        ; so move r20 to r11
+        mov r11, r20
+
+        ; write to addr
+        ldr r20, #{value}
+        ldr r1, .{winst}
+        ldr r0, $2
+        jpr r1
+        """
+
+        self.template_to_var = """
+        ; say b is at {addr}
+        ldr r11, {addr}
+
+        ; read value from r11
+        ldr r1, .cmemw
+        ldr r0, $2
+        jpr r1
+
+        ; r20 now contains the correct addr
+        ; so move r20 to r11
+        mov r12, r20
+
+        ; read value from var
+        ldr r11, {addr_from}
+        ldr r1, .{rinst}
+        ldr r0, $2
+        jpr r1
+
+        ; write to addr
+        mov r11, r12
+        ldr r1, .{winst}
+        ldr r0, $2
+        jpr r1
+        """
+
+        self.template = """
+        ; SET_PTR
+        {constructor}
+        """
+
+        self._internal = ""
+
+        self.compiler_instance: Compiler = compiler_instance
+
+    def __call__(self, tree, op=1):
+
+        initial = super().__call__(tree, op=op)
+        return self._internal + initial
+    
+    def proc_tree(self, tree):
+        print(tree)
+
+        ptr_var = tree['ID']
+        expr    = tree['EXPRESSION']
+
+        constructor = "; empty constructor"
+
+        types = {
+            'int': Int32,
+            'int8': Int8,
+            'hex': HexInt32,
+            'char': Char,
+            'id': ID
+        }
+
+        load_to_mem_actions = {
+            0: 'lmemw',
+            1: 'lmemb',
+            2: 'lmemh',
+            4: 'lmemw'
+        }
+
+        read_from_mem_actions = {
+            0: 'cmemw',
+            1: 'cmemb',
+            2: 'cmemh',
+            4: 'cmemw'
+        }
+
+        if expr[0].lower() in types:
+            if expr[0].lower() == 'int' or expr[0].lower() == 'hex':
+                value = types[expr[0].lower()](expr[1]['VALUE'])
+
+                ptr_var_pos = self.compiler_instance.get_variable(ptr_var)['pos']
+
+                # Set bitsize
+                bitsize = value.size
+
+                constructor = self.template_to_val.format(
+                    addr  = ptr_var_pos,
+                    value = value.value,
+                    winst = load_to_mem_actions[bitsize]
+                )
+
+            elif expr[0].lower() == 'char':
+                value = types[expr[0].lower()](expr[1]['VALUE'])
+
+                ptr_var_pos = self.compiler_instance.get_variable(ptr_var)['pos']
+
+                # Set bitsize
+                bitsize = value.size
+
+                constructor = self.template_to_val.format(
+                    addr  = ptr_var_pos,
+                    value = value.value,
+                    winst = load_to_mem_actions[bitsize]
+                )
+                
+            elif expr[0].lower() == 'id':
+                value_raw = expr[1]['VALUE']
+                value = self.compiler_instance.get_variable(value_raw)
+                bitsize_val = value['type'].size
+
+                ptr_var_pos = self.compiler_instance.get_variable(ptr_var)['pos']
+
+                # Set bitsize
+                bitsize = value['type'].size
+
+                constructor = self.template_to_var.format(
+                    addr  = ptr_var_pos,
+                    addr_from  = value['pos'],
+                    rinst = read_from_mem_actions[bitsize_val],
+                    winst = load_to_mem_actions[bitsize]
+                )
+        else:
+            raise TranspilerExceptions.IncompleteDeclaration(tree)
+        
+        print(constructor)
+        return {"constructor": constructor}
     
 class VariableReAssignMod(Module):
     name="VARIABLE_REASSIGNMENT"

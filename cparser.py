@@ -816,6 +816,10 @@ class ChParser(Parser):
     def import_statement(self, p):
         return ("SELFISH", {"VALUE":""}, p.lineno)
 
+    @_("'*' ID '=' expression ';'")
+    def statement(self, p):
+        return ("SET_PTR", {"ID": p.ID, "EXPRESSION": p.expression}, p.lineno)
+
     # Statment syntax END
     ###########################################################################
     # Expression START
