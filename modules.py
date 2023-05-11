@@ -1655,7 +1655,7 @@ class VariableAssignMod(Module):
                 from_var = self.compiler_instance.get_variable(expr[1]['ID'])
 
                 # Set bitsize
-                bitsize = from_var.type.size
+                bitsize = from_var["type"].size
 
                 # Check if we have a position
                 if self.custom_pos is not None:
@@ -1684,7 +1684,8 @@ class VariableAssignMod(Module):
 
                 from_var = self.compiler_instance.get_variable(expr[1]['ID'])
 
-                w
+                # Set bitsize
+                bitsize = from_var["type"].size
 
                 # Check if we have a position
                 if self.custom_pos is not None:
