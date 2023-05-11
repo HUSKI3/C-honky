@@ -1647,7 +1647,7 @@ class VariableAssignMod(Module):
                     constructor = f"{''.join(final_asm_items)}\n\t\t; List contents above"
 
             elif expr[0].lower() == 'pointer':
-                pprint(tree)
+                # pprint(tree)
 
                 if tree['TYPE'] not in ('int', 'int32'):
                     raise TranspilerExceptions.TypeMissmatch(var, tree['TYPE'], 'Int32', expr[-1])
@@ -1680,7 +1680,7 @@ class VariableAssignMod(Module):
                         force = True if self.compiler_instance is not None else False
                     )
             elif expr[0].lower() == 'deref':
-                pprint(tree)
+                # pprint(tree)
 
                 from_var = self.compiler_instance.get_variable(expr[1]['ID'])
 
@@ -1707,8 +1707,8 @@ class VariableAssignMod(Module):
                     self.compiler_instance.create_variable(
                         var,
                         position,
-                        type = from_var['type'],
-                        obj = from_var['type'],
+                        type = types[vartype],
+                        obj = types[vartype],
                         force = True if self.compiler_instance is not None else False
                     )
 
@@ -1932,12 +1932,16 @@ class VariableReAssignMod(Module):
 
         # Reconstruct our tree to fit the assign variable module
         # Get type from variable
-        vartype = self.compiler_instance.get_variable(varname)['object'].abbr_name
+        vartype = self.compiler_instance.get_variable(varname)['type'].abbr_name
+
+        # print("OTREE",tree)
+
         new_tree = {
             'ID': varname, 
             'TYPE': vartype, 
             'EXPRESSION':  tree['EXPRESSION']
         }
+        # print("NTREE",new_tree)
 
         asm = assign_module(
             tree = new_tree,
