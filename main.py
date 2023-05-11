@@ -48,7 +48,7 @@ text = open(argv[1],"r").read()
 
 ### Construct tree ###
 lexer = ChLexer()
-parser = ChParser()
+parser = ChParser(argv[1])
 ######################
 
 ### Tasks ###
@@ -96,7 +96,7 @@ with Progress(
 
     # Build root node
     root_compiler_instance = Compiler(
-        tree, flags = flags
+        tree, flags = flags, filename = argv[1]
     )
     root_compiler_instance.populate_modules_actions([
         PutCharMod,

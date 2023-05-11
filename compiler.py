@@ -29,11 +29,13 @@ class Compiler:
         warnings = 0,
         line = 1,
         flags = '',
-        namespaces = {}
+        namespaces = {},
+        filename = ""
     ) -> None:
         self.code = tree
 
         self.actions = {}
+        self.filename = filename
 
         self.variables: dict  = variables
         self.functions: dict  = functions
@@ -128,7 +130,8 @@ class Compiler:
             self.bitdata,
             self.warnings,
             self.line,
-            self.namespaces
+            self.namespaces,
+            filename = self.filename
         )
         else:
             instance = Compiler(
@@ -144,7 +147,8 @@ class Compiler:
             bitdata,
             self.warnings,
             self.line,
-            self.namespaces
+            self.namespaces,
+            filename = self.filename
         )
 
         # Modules and actions need to be recreated with a new scope

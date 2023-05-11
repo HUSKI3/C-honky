@@ -45,7 +45,7 @@ class Int32:
     size = 4
     abbr_name = 'int'
     def __init__(self, value):
-        self.value = int(value)
+        self.value = int(value, 16) if (type(value) == str and value[0:2] == "0x") else int(value)
         self.length = value
         self.size = Int32.size
         self.hex = False

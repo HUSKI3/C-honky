@@ -141,3 +141,7 @@ class ChLexer(Lexer):
     @_(r"\n+")
     def ignore_newline(self, t):
         self.lineno += len(t.value)
+    
+    def error(self, t):
+        print("Illegal character '%s'" % t.value[0])
+        quit(0)

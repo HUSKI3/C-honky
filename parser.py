@@ -1,12 +1,15 @@
 from sly import Parser
 from sly.yacc import YaccProduction, YaccSymbol
 import logging
+from rich import print as pprint
+from rich.syntax import Syntax
 from lexer import ChLexer
 
 ERROR_COUNT = 0
 
 class ChParser(Parser):
-    def __init__(self) -> None:
+    def __init__(self, filename) -> None:
+        self.filename = filename
         super().__init__()
 
     def parse(self, tokens, task = None, progress = None, tasklen=100):
@@ -1096,3 +1099,21 @@ class ChParser(Parser):
     # Intermediate expression END
     ###########################################################################
     # Syntax error START
+
+    def error(self, p):
+        if p:
+            pprint(f"[red bold]Syntax error at line {p.lineno} [/red bold]")
+
+            with open(self.filename, "r") as f:
+                line_affected = f.readlines()[p.lineno]
+
+            pretty = Syntax(
+                line_affected,
+                "Rust", 
+                padding=1, 
+                line_numbers=True
+            )
+            pprint(pretty)
+            quit(1)
+        else:
+            print("Syntax error at EOF")

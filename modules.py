@@ -12,6 +12,17 @@ from rich.console import Console
 from rich.syntax import Syntax
 console = Console()
 
+o_isinstance = isinstance
+
+def isinstance(o1, o2):
+    if o_isinstance(o1, HexInt32) and o2==Int32\
+        or o_isinstance(o2, HexInt32) and o1==Int32:
+        return True
+    elif o_isinstance(o1, o2):
+        return True
+    else:
+        return False
+
 def rprint(data):
     console.print(
         Syntax(
@@ -1141,7 +1152,7 @@ class EmbedMod(Module):
             built = tree['CODE'][1]['VALUE'].format(**vars)
         elif tree['ID'] == 'ck':
             lexer = ChLexer()
-            parser = ChParser()
+            parser = ChParser(self.compiler_instance.filename)
             file = tree['CODE'][1]['VALUE']
 
             lexed_tokens = lexer.tokenize(
