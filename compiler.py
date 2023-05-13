@@ -91,6 +91,9 @@ class Compiler:
                 if action[1]['KEY'] == 'bitstart':
                     self.bitstart = int(action[1]['VALUE'][1]['VALUE'], 16)
                     self.nextaddr = self.bitstart
+                if action[1]['KEY'] == 'origin':
+                    offset = int(action[1]['VALUE'][1]['VALUE'], 16)
+                    self.finished.append(f"\n; LABEL_OFFSET\nfl labeloffset={offset}\n")
             elif action[0] in self.actions:
                 ret = self.actions[action[0]](action[1], op = self.optimisation_level)
                 self._current_code = action

@@ -243,7 +243,7 @@ class FunctionCallMod(Module):
         funcname = tree['ID'][1]['VALUE']
         arguments = tree['FUNCTION_ARGUMENTS']
 
-        console.log(f"[FunctionCallMod] {funcname}({arguments})")
+        # console.log(f"[FunctionCallMod] {funcname}({arguments})")
 
         # Check if the function is defined already
         if funcname in self.compiler_instance.functions or "NAMESPACE" in tree:
@@ -264,7 +264,7 @@ class FunctionCallMod(Module):
                 func_instance = namespace_instance.functions[funcname]['object']
                 # Update instance locals
                 # func_instance.variables = {**func_instance.variables, **self.compiler_instance.variables }
-                print(self.compiler_instance.namespace)
+                # print(self.compiler_instance.namespace)
 
             else:
                 # Check if the function is a builtin module
@@ -356,14 +356,14 @@ class FunctionCallMod(Module):
                                     from_pos = var_obj['pos'],
                                     from_var = var_obj
                                 )
-                                print(f"NAMESPACE {var_name} {var_obj['pos']} -> {name} {pos}")
+                                # print(f"NAMESPACE {var_name} {var_obj['pos']} -> {name} {pos}")
                             else:
                                 # Reassign value
                                 new_value_for_var = reassign_module(
                                     new_tree,
                                     redirect=True
                                 )
-                            print(new_value_for_var)
+                            # print(new_value_for_var)
 
                             # Append to instance finals
                             self.compiler_instance.finished.append(
@@ -480,7 +480,7 @@ class FunctionDecMod(Module):
         if arguments:
             arguments = arguments['POSITIONAL_ARGS']
         
-        console.log(f"[FunctionDecMod] {funcname}({arguments}) -> {returns}")
+        # console.log(f"[FunctionDecMod] {funcname}({arguments}) -> {returns}")
 
         # Need to process the program
         instance = self.compiler_instance.new_instance(
@@ -1166,8 +1166,11 @@ class EmbedMod(Module):
             )
 
             instance.run()
-            self.compiler_instance.sync(instance, passthrough = True)
-            print("Compiler sync complete")
+            self.compiler_instance.sync(
+                instance, 
+                passthrough = True
+            )
+            # print("Compiler sync complete")
             built = f'; Included file {file}'
 
         else:
@@ -1932,7 +1935,7 @@ class GotoMod(Module):
         return self._internal + initial
     
     def proc_tree(self, tree):
-        print(tree)
+        # print(tree)
 
         var = tree['ID']
 
@@ -1942,7 +1945,7 @@ class GotoMod(Module):
         constructor = self.template_s.format(
             addr = var_pos
         )
-        
+
         return {"constructor": constructor}
 
 # TODO: Finish implementing Increment and Decrement
@@ -1968,7 +1971,7 @@ class IncrementMod(Module):
         return self._internal + initial
     
     def proc_tree(self, tree):
-        print(tree)
+        # print(tree)
 
         var = tree['VAR']
 
@@ -2083,7 +2086,7 @@ class ValueAtPointerMod(Module):
         return self._internal + initial
     
     def proc_tree(self, tree):
-        print(tree)
+        # print(tree)
 
         ptr_var = tree['ID']
         expr    = tree['EXPRESSION']
@@ -2177,7 +2180,6 @@ class ValueAtPointerMod(Module):
         else:
             raise TranspilerExceptions.IncompleteDeclaration(tree)
         
-        print(constructor)
         return {"constructor": constructor}
     
 class VariableReAssignMod(Module):
