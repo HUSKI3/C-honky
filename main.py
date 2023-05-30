@@ -19,7 +19,8 @@ from modules import (
     AdvancedWriteMod,
     ValueAtPointerMod,
     IncrementMod,
-    GotoMod
+    GotoMod,
+    ReturnMod
 )
 
 import pprint
@@ -117,7 +118,8 @@ with Progress(
         AdvancedWriteMod,
         ValueAtPointerMod,
         IncrementMod,
-        GotoMod
+        GotoMod,
+        ReturnMod
     ])
 
 
@@ -139,6 +141,7 @@ if failed:
 else:
     print(f"\n[bold green]Assembly build complete :heavy_check_mark: [/bold green]")
     final_asm = '\n'.join(root_compiler_instance.finished)
+    final_flags_asm = '\n'.join(root_compiler_instance.flags)
     # final_asm_pretty = Syntax(
     #                 final_asm,
     #                 "Asm", 
@@ -158,7 +161,7 @@ else:
 
 
 # Once we are done put everything together
-base = open("base.asm","r").read().format(code=final_asm, func_code=final_func_asm)
+base = open("base.asm","r").read().format(flags=final_flags_asm,code=final_asm, func_code=final_func_asm)
 # Write
 open('out.asm', 'w+').write(base)
 #############

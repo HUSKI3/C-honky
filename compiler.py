@@ -40,6 +40,7 @@ class Compiler:
         self.variables: dict  = variables
         self.functions: dict  = functions
         self.arguments: dict  = arguments
+        self.flags      = []
         self.bitstart   = bitstart
         self.bitend     = None
         self.bitdata    = bitdata
@@ -93,7 +94,7 @@ class Compiler:
                     self.nextaddr = self.bitstart
                 if action[1]['KEY'] == 'origin':
                     offset = int(action[1]['VALUE'][1]['VALUE'], 16)
-                    self.finished.append(f"\n; LABEL_OFFSET\nfl labeloffset={offset}\n")
+                    self.flags.insert(0,f"\n; LABEL_OFFSET\nfl labeloffset={offset}\n")
             elif action[0] in self.actions:
                 ret = self.actions[action[0]](action[1], op = self.optimisation_level)
                 self._current_code = action
@@ -263,11 +264,13 @@ class Compiler:
         self,
         name: str, 
         obj: object,
-        source: str
+        source: str,
+        returns: str
     ) -> None:
         self.functions[name] = {
                 "object": obj,
-                "source": source
+                "source": source,
+                "returns": returns
             }
         
     def create_namespace(
